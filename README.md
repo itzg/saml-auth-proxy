@@ -1,3 +1,7 @@
+[![CircleCI](https://circleci.com/gh/itzg/saml-auth-proxy.svg?style=svg)](https://circleci.com/gh/itzg/saml-auth-proxy)
+[![](https://img.shields.io/github/release/itzg/saml-auth-proxy.svg?style=flat)](https://github.com/itzg/saml-auth-proxy/releases/latest)
+[![](https://img.shields.io/docker/pulls/itzg/saml-auth-proxy.svg?style=flat)](https://hub.docker.com/r/itzg/saml-auth-proxy)
+
 Provides a SAML SP authentication proxy for backend web services
 
 ## Usage
