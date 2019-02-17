@@ -1,4 +1,4 @@
-project_name: saml-proxy
+project_name: saml-auth-proxy
 before:
   hooks:
     - go mod download
