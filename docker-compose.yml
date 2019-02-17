@@ -1,0 +1,20 @@
+version: '3.4'
+
+services:
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: notsecret
+      GF_AUTH_PROXY_ENABLED: "true"
+      GF_AUTH_PROXY_HEADER_NAME: X-WEBAUTH-USER
+    volumes:
+      - grafana:/var/lib/grafana
+  web-debug-server:
+    image: itzg/web-debug-server:0.0.4
+    ports:
+      - 8081:8080
+
+volumes:
+  grafana: {}

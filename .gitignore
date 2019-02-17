@@ -1,0 +1,9 @@
+/*metadata.xml
+/*.cert
+/*.key
+
+/dist/
+/saml-auth-proxy
+/saml-auth-proxy.exe
+/*.iml
+/.idea
