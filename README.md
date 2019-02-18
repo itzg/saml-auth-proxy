@@ -58,7 +58,8 @@ Start saml-auth-proxy using:
 ./saml-auth-proxy \
   --base-url http://${BASE_FQDN}:8080 \
   --backend-url http://locahost:3000 \
-  --idp-metadata-url https://idp.ssocircle.com/
+  --idp-metadata-url https://idp.ssocircle.com/ \
+  --attribute-header-mappings UserID=x-webauth-user
 ```
 
 Generate your SP's SAML metadata by accessing the built-in metadata endpoint:
