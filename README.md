@@ -17,6 +17,7 @@ Flags:
       --bind string                                host:port to bind for serving HTTP [SAML_PROXY_BIND] (default ":8080")
   -h, --help                                       help for saml-auth-proxy
       --idp-metadata-url string                    URL of the IdP's metadata XML [SAML_PROXY_IDP_METADATA_URL]
+      --name-id-mapping string                     Name of the request header to convey the SAML nameID/subject [SAML_PROXY_NAME_ID_MAPPING]
       --new-auth-webhook-url string                URL of webhook that will get POST'ed when a new authentication is processed [SAML_PROXY_NEW_AUTH_WEBHOOK_URL]
       --sp-cert-path string                        Path to the X509 public certificate PEM file for this SP [SAML_PROXY_SP_CERT_PATH] (default "saml-auth-proxy.cert")
       --sp-key-path string                         Path to the X509 private key PEM file for this SP [SAML_PROXY_SP_KEY_PATH] (default "saml-auth-proxy.key")
