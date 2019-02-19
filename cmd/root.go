@@ -30,6 +30,8 @@ func init() {
 	rootCmd.Flags().StringVar(&serverConfig.SpCertPath, "sp-cert-path", "saml-auth-proxy.cert", "Path to the X509 public certificate PEM file for this SP")
 	rootCmd.Flags().StringToStringVar(&serverConfig.AttributeHeaderMappings, "attribute-header-mappings", nil,
 		"Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header")
+	rootCmd.Flags().StringVar(&serverConfig.NameIdHeaderMapping, "name-id-mapping", "",
+		"Name of the request header to convey the SAML nameID/subject")
 
 	_ = rootCmd.MarkFlagRequired("base-url")
 	_ = rootCmd.MarkFlagRequired("backend-url")

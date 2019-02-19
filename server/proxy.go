@@ -42,6 +42,12 @@ func NewProxy(cfg *Config) (*proxy, error) {
 	return proxy, nil
 }
 
+func (p *proxy) health(respOutWriter http.ResponseWriter, reqIn *http.Request) {
+	respOutWriter.Header().Set("Content-Type", "text/plain")
+	respOutWriter.WriteHeader(200)
+	respOutWriter.Write([]byte("OK"))
+}
+
 func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) {
 
 	resolved, err := p.backendUrl.Parse(reqIn.URL.Path)
@@ -57,6 +63,8 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 
 	authToken := samlsp.Token(reqIn.Context())
 
+	copyHeaders(reqOut.Header, reqIn.Header)
+
 	p.checkForNewAuth(authToken)
 
 	if p.config.AttributeHeaderMappings != nil {
@@ -64,7 +72,11 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 			reqOut.Header.Set(hdr, authToken.Attributes.Get(attr))
 		}
 	}
-	copyHeaders(reqOut.Header, reqIn.Header)
+	if p.config.NameIdHeaderMapping != "" {
+		reqOut.Header.Set(p.config.NameIdHeaderMapping,
+			authToken.StandardClaims.Subject)
+	}
+
 	reqOut.Header.Set("X-Forwarded-Host", reqIn.Host)
 	remoteHost, _, err := net.SplitHostPort(reqIn.RemoteAddr)
 	if err == nil {

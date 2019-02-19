@@ -18,6 +18,7 @@ type Config struct {
 	IdpMetadataUrl          string
 	SpKeyPath               string
 	SpCertPath              string
+	NameIdHeaderMapping     string
 	AttributeHeaderMappings map[string]string
 	NewAuthWebhookUrl       string
 }
@@ -48,6 +49,7 @@ func Start(cfg *Config) error {
 		Key:            keyPair.PrivateKey.(*rsa.PrivateKey),
 		Certificate:    keyPair.Leaf,
 		IDPMetadataURL: idpMetadataUrl,
+		CookieDomain:   rootUrl.Hostname(),
 	})
 	if err != nil {
 		return errors.Wrap(err, "Failed to initialize SP")
@@ -60,6 +62,7 @@ func Start(cfg *Config) error {
 
 	app := http.HandlerFunc(proxy.handler)
 	http.Handle("/saml/", samlSP)
+	http.Handle("/_health", http.HandlerFunc(proxy.health))
 	http.Handle("/", samlSP.RequireAccount(app))
 
 	log.Printf("Serving requests for %s at %s", cfg.BaseUrl, cfg.Bind)
