@@ -69,7 +69,11 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 
 	if p.config.AttributeHeaderMappings != nil {
 		for attr, hdr := range p.config.AttributeHeaderMappings {
-			reqOut.Header.Set(hdr, authToken.Attributes.Get(attr))
+			if values, ok := authToken.Attributes[attr]; ok {
+				for _, value := range values {
+					reqOut.Header.Add(hdr, value)
+				}
+			}
 		}
 	}
 	if p.config.NameIdHeaderMapping != "" {
