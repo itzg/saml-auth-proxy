@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/pkg/errors"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -16,6 +17,7 @@ type Config struct {
 	BaseUrl                 string
 	BackendUrl              string
 	IdpMetadataUrl          string
+	IdpCaFile               string
 	SpKeyPath               string
 	SpCertPath              string
 	NameIdHeaderMapping     string
@@ -44,12 +46,18 @@ func Start(cfg *Config) error {
 		return errors.Wrap(err, "Failed to parse base URL")
 	}
 
+	httpClient, err := setupHttpClient(cfg.IdpCaFile)
+	if err != nil {
+		return errors.Wrap(err, "Failed to setup HTTP client")
+	}
+
 	samlSP, err := samlsp.New(samlsp.Options{
 		URL:            *rootUrl,
 		Key:            keyPair.PrivateKey.(*rsa.PrivateKey),
 		Certificate:    keyPair.Leaf,
 		IDPMetadataURL: idpMetadataUrl,
 		CookieDomain:   rootUrl.Hostname(),
+		HTTPClient:     httpClient,
 	})
 	if err != nil {
 		return errors.Wrap(err, "Failed to initialize SP")
@@ -67,4 +75,33 @@ func Start(cfg *Config) error {
 
 	log.Printf("Serving requests for %s at %s", cfg.BaseUrl, cfg.Bind)
 	return http.ListenAndServe(cfg.Bind, nil)
+}
+
+func setupHttpClient(idpCaFile string) (*http.Client, error) {
+	if idpCaFile == "" {
+		return nil, nil
+	}
+
+	rootCAs, _ := x509.SystemCertPool()
+	if rootCAs == nil {
+		rootCAs = x509.NewCertPool()
+	}
+
+	certs, err := ioutil.ReadFile(idpCaFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to read IdP CA file")
+	}
+
+	if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
+		log.Println("INF No certs appended, using system certs only")
+	}
+
+	config := &tls.Config{
+		RootCAs: rootCAs,
+	}
+
+	tr := &http.Transport{TLSClientConfig: config}
+	client := &http.Client{Transport: tr}
+
+	return client, nil
 }

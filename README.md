@@ -16,6 +16,7 @@ Flags:
       --base-url string                            External URL of this proxy [SAML_PROXY_BASE_URL]
       --bind string                                host:port to bind for serving HTTP [SAML_PROXY_BIND] (default ":8080")
   -h, --help                                       help for saml-auth-proxy
+      --idp-ca-path string                         Optional path to a CA certificate PEM file for the IdP [SAML_PROXY_IDP_CA_PATH]
       --idp-metadata-url string                    URL of the IdP's metadata XML [SAML_PROXY_IDP_METADATA_URL]
       --name-id-mapping string                     Name of the request header to convey the SAML nameID/subject [SAML_PROXY_NAME_ID_MAPPING]
       --new-auth-webhook-url string                URL of webhook that will get POST'ed when a new authentication is processed [SAML_PROXY_NEW_AUTH_WEBHOOK_URL]
@@ -23,6 +24,9 @@ Flags:
       --sp-key-path string                         Path to the X509 private key PEM file for this SP [SAML_PROXY_SP_KEY_PATH] (default "saml-auth-proxy.key")
       --version                                    version for saml-auth-proxy
 ```
+
+The snake-case values, such as `SAML_PROXY_BACKEND_URL`, are the equivalent environment variables
+that can be set instead of passing configuration via the command-line.
 
 ## Building
 

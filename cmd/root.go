@@ -26,6 +26,8 @@ func init() {
 	rootCmd.Flags().StringVar(&serverConfig.BackendUrl, "backend-url", "", "URL of the backend being proxied")
 	rootCmd.Flags().StringVar(&serverConfig.NewAuthWebhookUrl, "new-auth-webhook-url", "", "URL of webhook that will get POST'ed when a new authentication is processed")
 	rootCmd.Flags().StringVar(&serverConfig.IdpMetadataUrl, "idp-metadata-url", "", "URL of the IdP's metadata XML")
+	rootCmd.Flags().StringVar(&serverConfig.IdpCaFile, "idp-ca-path", "",
+		"Optional path to a CA certificate PEM file for the IdP")
 	rootCmd.Flags().StringVar(&serverConfig.SpKeyPath, "sp-key-path", "saml-auth-proxy.key", "Path to the X509 private key PEM file for this SP")
 	rootCmd.Flags().StringVar(&serverConfig.SpCertPath, "sp-cert-path", "saml-auth-proxy.cert", "Path to the X509 public certificate PEM file for this SP")
 	rootCmd.Flags().StringToStringVar(&serverConfig.AttributeHeaderMappings, "attribute-header-mappings", nil,
