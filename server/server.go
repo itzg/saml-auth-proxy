@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -18,6 +19,7 @@ type Config struct {
 	BackendUrl              string
 	IdpMetadataUrl          string
 	IdpCaFile               string
+	NameIdFormat            string
 	SpKeyPath               string
 	SpCertPath              string
 	NameIdHeaderMapping     string
@@ -61,6 +63,19 @@ func Start(cfg *Config) error {
 	})
 	if err != nil {
 		return errors.Wrap(err, "Failed to initialize SP")
+	}
+
+	switch cfg.NameIdFormat {
+	case "unspecified":
+		samlSP.ServiceProvider.AuthnNameIDFormat = saml.UnspecifiedNameIDFormat
+	case "transient":
+		samlSP.ServiceProvider.AuthnNameIDFormat = saml.TransientNameIDFormat
+	case "email":
+		samlSP.ServiceProvider.AuthnNameIDFormat = saml.EmailAddressNameIDFormat
+	case "persistent":
+		samlSP.ServiceProvider.AuthnNameIDFormat = saml.PersistentNameIDFormat
+	default:
+		samlSP.ServiceProvider.AuthnNameIDFormat = saml.NameIDFormat(cfg.NameIdFormat)
 	}
 
 	proxy, err := NewProxy(cfg)

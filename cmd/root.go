@@ -28,6 +28,8 @@ func init() {
 	rootCmd.Flags().StringVar(&serverConfig.IdpMetadataUrl, "idp-metadata-url", "", "URL of the IdP's metadata XML")
 	rootCmd.Flags().StringVar(&serverConfig.IdpCaFile, "idp-ca-path", "",
 		"Optional path to a CA certificate PEM file for the IdP")
+	rootCmd.Flags().StringVar(&serverConfig.NameIdFormat, "name-id-format", "",
+		"One of unspecified, transient (default), email, or persistent to use a standard format or give a full URN of the name ID format")
 	rootCmd.Flags().StringVar(&serverConfig.SpKeyPath, "sp-key-path", "saml-auth-proxy.key", "Path to the X509 private key PEM file for this SP")
 	rootCmd.Flags().StringVar(&serverConfig.SpCertPath, "sp-cert-path", "saml-auth-proxy.cert", "Path to the X509 public certificate PEM file for this SP")
 	rootCmd.Flags().StringToStringVar(&serverConfig.AttributeHeaderMappings, "attribute-header-mappings", nil,

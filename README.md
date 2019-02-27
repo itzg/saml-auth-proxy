@@ -18,6 +18,7 @@ Flags:
   -h, --help                                       help for saml-auth-proxy
       --idp-ca-path string                         Optional path to a CA certificate PEM file for the IdP [SAML_PROXY_IDP_CA_PATH]
       --idp-metadata-url string                    URL of the IdP's metadata XML [SAML_PROXY_IDP_METADATA_URL]
+      --name-id-format string                      One of unspecified, transient (default), email, or persistent to use a standard format or give a full URN of the name ID format [SAML_PROXY_NAME_ID_FORMAT]
       --name-id-mapping string                     Name of the request header to convey the SAML nameID/subject [SAML_PROXY_NAME_ID_MAPPING]
       --new-auth-webhook-url string                URL of webhook that will get POST'ed when a new authentication is processed [SAML_PROXY_NEW_AUTH_WEBHOOK_URL]
       --sp-cert-path string                        Path to the X509 public certificate PEM file for this SP [SAML_PROXY_SP_CERT_PATH] (default "saml-auth-proxy.cert")
