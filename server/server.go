@@ -88,7 +88,8 @@ func Start(cfg *Config) error {
 	http.Handle("/_health", http.HandlerFunc(proxy.health))
 	http.Handle("/", samlSP.RequireAccount(app))
 
-	log.Printf("Serving requests for %s at %s", cfg.BaseUrl, cfg.Bind)
+	log.Printf("Serving requests for %s -> %s at %s",
+		cfg.BaseUrl, cfg.BackendUrl, cfg.Bind)
 	return http.ListenAndServe(cfg.Bind, nil)
 }
 
