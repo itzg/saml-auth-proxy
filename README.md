@@ -29,6 +29,15 @@ Flags:
 The snake-case values, such as `SAML_PROXY_BACKEND_URL`, are the equivalent environment variables
 that can be set instead of passing configuration via the command-line.
 
+## Note for AJAX/Fetch Operations
+
+If the web application being protected behind this proxy makes AJAX/Fetch calls, then be sure
+to enable "same-origin" access for the credentials of those calls, 
+as described [here](https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials).
+
+With that configuration in place, the AJAX/Fetch calls will leverage the same `token` cookie 
+provided in response to the first authenticated page retrieval via the proxy.
+
 ## Building
 
 With Go 1.11 or newer:
