@@ -80,7 +80,7 @@ Start saml-auth-proxy using:
 Generate your SP's SAML metadata by accessing the built-in metadata endpoint:
 
 ```bash
-curl localhost:8000/saml/metadata > saml-sp-metadata.xml
+curl localhost:8080/saml/metadata > saml-sp-metadata.xml
 ```
 
 You can post the content of the `saml-sp-metadata.xml` file at 
