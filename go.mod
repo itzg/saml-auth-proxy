@@ -2,7 +2,7 @@ module github.com/itzg/saml-auth-proxy
 
 require (
 	github.com/beevik/etree v1.1.0 // indirect
-	github.com/crewjam/saml v0.0.0-20180831135026-ebc5f787b786
+	github.com/crewjam/saml v0.0.0-20190501171645-724cb1c4fab1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jamiealquiza/envy v1.1.0
