@@ -2,7 +2,7 @@ module github.com/itzg/saml-auth-proxy
 
 require (
 	github.com/beevik/etree v1.1.0 // indirect
-	github.com/crewjam/saml v0.0.0-20190508002657-ca21de9dd5b9
+	github.com/crewjam/saml v0.0.0-20190521120225-344d075952c9
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jamiealquiza/envy v1.1.0
@@ -14,6 +14,8 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
-	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67 // indirect
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
+
+go 1.13
