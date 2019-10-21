@@ -16,8 +16,17 @@ import (
 	"time"
 )
 
-const newTokenCacheExpiration = 5 * time.Second
-const newTokenCacheCleanupInterval = 1 * time.Minute
+const (
+	newTokenCacheExpiration      = 5 * time.Second
+	newTokenCacheCleanupInterval = 1 * time.Minute
+)
+
+const (
+	HeaderAuthorizedUsing = "X-Authorized-Using"
+	HeaderForwardedProto  = "X-Forwarded-Proto"
+	HeaderForwardedFor    = "X-Forwarded-For"
+	HeaderForwardedHost   = "X-Forwarded-Host"
+)
 
 type proxy struct {
 	config        *Config
@@ -50,6 +59,14 @@ func (p *proxy) health(respOutWriter http.ResponseWriter, reqIn *http.Request) {
 
 func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) {
 
+	authToken := samlsp.Token(reqIn.Context())
+
+	authUsing, authorized := p.authorized(authToken, reqIn)
+	if !authorized {
+		respOutWriter.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	resolved, err := p.backendUrl.Parse(reqIn.URL.Path)
 	if err != nil {
 		log.Printf("ERR failed to resolve backend URL from %s: %s", reqIn.URL.Path, err.Error())
@@ -60,8 +77,11 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	}
 
 	reqOut, err := http.NewRequest(reqIn.Method, resolved.String(), reqIn.Body)
-
-	authToken := samlsp.Token(reqIn.Context())
+	if err != nil {
+		log.Printf("ERR unable to create new request for %s %s: %s", reqIn.Method, reqIn.URL, err)
+		respOutWriter.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	copyHeaders(reqOut.Header, reqIn.Header)
 
@@ -81,15 +101,18 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 			authToken.StandardClaims.Subject)
 	}
 
-	reqOut.Header.Set("X-Forwarded-Host", reqIn.Host)
+	reqOut.Header.Set(HeaderForwardedHost, reqIn.Host)
 	remoteHost, _, err := net.SplitHostPort(reqIn.RemoteAddr)
 	if err == nil {
-		reqOut.Header.Add("X-Forwarded-For", remoteHost)
+		reqOut.Header.Add(HeaderForwardedFor, remoteHost)
 	} else {
 		log.Printf("ERR unable to parse host and port from %s: %s", reqIn.RemoteAddr, err.Error())
 	}
 	protoParts := strings.Split(reqIn.Proto, "/")
-	reqOut.Header.Set("X-Forwarded-Proto", strings.ToLower(protoParts[0]))
+	reqOut.Header.Set(HeaderForwardedProto, strings.ToLower(protoParts[0]))
+	if authUsing != "" {
+		reqOut.Header.Set(HeaderAuthorizedUsing, authUsing)
+	}
 
 	respIn, err := p.client.Do(reqOut)
 	defer respIn.Body.Close()
@@ -113,9 +136,33 @@ func (p *proxy) checkForNewAuth(authToken *samlsp.AuthorizationToken) {
 					log.Printf("ERR unable to post new auth webhook: %s", err.Error())
 				}
 			} else {
-				log.Printf("ERR uanble to encode auth token attributes: %s", err.Error())
+				log.Printf("ERR unable to encode auth token attributes: %s", err.Error())
 			}
 		}
+	}
+}
+
+// authorized returns an boolean indication if the request is authorized.
+// The initial string return value is an attribute=value pair that was used to authorize the request.
+// If authorization was not configured the returned string is empty.
+func (p *proxy) authorized(token *samlsp.AuthorizationToken, request *http.Request) (string, bool) {
+	if p.config.AuthorizeAttribute != "" {
+		values, exists := token.Attributes[p.config.AuthorizeAttribute]
+		if !exists {
+			return "", false
+		}
+
+		for _, value := range values {
+			for _, expected := range p.config.AuthorizeValues {
+				if value == expected {
+					return fmt.Sprintf("%s=%s", p.config.AuthorizeAttribute, value), true
+				}
+			}
+		}
+
+		return "", false
+	} else {
+		return "", true
 	}
 }
 

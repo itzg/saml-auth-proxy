@@ -36,6 +36,10 @@ func init() {
 		"Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header")
 	rootCmd.Flags().StringVar(&serverConfig.NameIdHeaderMapping, "name-id-mapping", "",
 		"Name of the request header to convey the SAML nameID/subject")
+	rootCmd.Flags().StringVar(&serverConfig.AuthorizeAttribute, "authorize-attribute", "",
+		"Enables authorization and specifies the attribute to check for authorized values")
+	rootCmd.Flags().StringSliceVar(&serverConfig.AuthorizeValues, "authorize-values", []string{},
+		"Specifies the possible values that must be present in the authorize attribute")
 
 	_ = rootCmd.MarkFlagRequired("base-url")
 	_ = rootCmd.MarkFlagRequired("backend-url")

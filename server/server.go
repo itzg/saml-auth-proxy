@@ -25,6 +25,8 @@ type Config struct {
 	NameIdHeaderMapping     string
 	AttributeHeaderMappings map[string]string
 	NewAuthWebhookUrl       string
+	AuthorizeAttribute      string
+	AuthorizeValues         []string
 }
 
 func Start(cfg *Config) error {
