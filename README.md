@@ -56,6 +56,10 @@ When the user is authorized, the proxied request header `X-Authorized-Using` wil
 X-Authorized-Using: UserID=user1
 ```
 
+## Health Endpoint
+
+The proxy itself provides a health endpoint at `/_health` that can be used to confirm the proxy is healthy/ready independent of the SAML processing. It returns a status code of 200 and a `text/plain` body with "OK".
+
 ## Building
 
 With Go 1.11 or newer:
