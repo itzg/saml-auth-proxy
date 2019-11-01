@@ -75,6 +75,7 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 		_, _ = respOutWriter.Write([]byte(fmt.Sprintf("Failed to resolve backend URL: %s", err.Error())))
 		return
 	}
+	resolved.RawQuery = reqIn.URL.RawQuery
 
 	reqOut, err := http.NewRequest(reqIn.Method, resolved.String(), reqIn.Body)
 	if err != nil {
