@@ -97,8 +97,8 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 			}
 		}
 	}
-	if p.config.NameIdHeaderMapping != "" {
-		reqOut.Header.Set(p.config.NameIdHeaderMapping,
+	if p.config.NameIdMapping != "" {
+		reqOut.Header.Set(p.config.NameIdMapping,
 			authToken.StandardClaims.Subject)
 	}
 
