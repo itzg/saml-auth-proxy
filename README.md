@@ -7,34 +7,32 @@ Provides a SAML SP authentication proxy for backend web services
 ## Usage
 
 ```text
-  --attribute-header-mappings value
+  -attribute-header-mappings attribute=header
     	Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header [SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS]
-  --authorize-attribute string
+  -authorize-attribute attribute
     	Enables authorization and specifies the attribute to check for authorized values [SAML_PROXY_AUTHORIZE_ATTRIBUTE]
-  --authorize-values value
-    	Specifies the possible values that must be present in the authorize attribute [SAML_PROXY_AUTHORIZE_VALUES]
-  --backend-url string
+  -authorize-values values
+    	If enabled, comma separated list of values that must be present in the authorize attribute [SAML_PROXY_AUTHORIZE_VALUES]
+  -backend-url URL
     	URL of the backend being proxied [SAML_PROXY_BACKEND_URL]
-  --base-url string
+  -base-url URL
     	External URL of this proxy [SAML_PROXY_BASE_URL]
-  --bind string
+  -bind host:port
     	host:port to bind for serving HTTP [SAML_PROXY_BIND] (default ":8080")
-  --idp-ca-path string
+  -idp-ca-path path
     	Optional path to a CA certificate PEM file for the IdP [SAML_PROXY_IDP_CA_PATH]
-  --idp-metadata-url string
+  -idp-metadata-url URL
     	URL of the IdP's metadata XML [SAML_PROXY_IDP_METADATA_URL]
-  --name-id-format string
+  -name-id-format string
     	One of unspecified, transient (default), email, or persistent to use a standard format or give a full URN of the name ID format [SAML_PROXY_NAME_ID_FORMAT]
-  --name-id-mapping string
+  -name-id-mapping header
     	Name of the request header to convey the SAML nameID/subject [SAML_PROXY_NAME_ID_MAPPING]
-  --new-auth-webhook-url string
+  -new-auth-webhook-url URL
     	URL of webhook that will get POST'ed when a new authentication is processed [SAML_PROXY_NEW_AUTH_WEBHOOK_URL]
-  --sp-cert-path string
-    	Path to the X509 public certificate PEM file for this SP [SAML_PROXY_SP_CERT_PATH] (default "saml-auth-proxy.cert")
-  --sp-key-path string
-    	Path to the X509 private key PEM file for this SP [SAML_PROXY_SP_KEY_PATH] (default "saml-auth-proxy.key")
-  --version
-    	show version and exit [SAML_PROXY_VERSION]
+  -sp-cert-path path
+    	The path to the X509 public certificate PEM file for this SP [SAML_PROXY_SP_CERT_PATH] (default "saml-auth-proxy.cert")
+  -sp-key-path path
+    	The path to the X509 private key PEM file for this SP [SAML_PROXY_SP_KEY_PATH] (default "saml-auth-proxy.key")
 ```
 
 The snake-case values, such as `SAML_PROXY_BACKEND_URL`, are the equivalent environment variables

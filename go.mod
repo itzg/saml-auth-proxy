@@ -5,7 +5,7 @@ require (
 	github.com/crewjam/saml v0.0.0-20190521120225-344d075952c9
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/itzg/go-flagsfiller v1.1.0
+	github.com/itzg/go-flagsfiller v1.2.0
 	github.com/jamiealquiza/envy v1.1.0
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect

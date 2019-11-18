@@ -15,19 +15,19 @@ import (
 
 type Config struct {
 	Version                 bool              `usage:"show version and exit"`
-	Bind                    string            `default:":8080" usage:"host:port to bind for serving HTTP"`
-	BaseUrl                 string            `usage:"External URL of this proxy"`
-	BackendUrl              string            `usage:"URL of the backend being proxied"`
-	IdpMetadataUrl          string            `usage:"URL of the IdP's metadata XML"`
-	IdpCaPath               string            `usage:"Optional path to a CA certificate PEM file for the IdP"`
+	Bind                    string            `default:":8080" usage:"[host:port] to bind for serving HTTP"`
+	BaseUrl                 string            `usage:"External [URL] of this proxy"`
+	BackendUrl              string            `usage:"[URL] of the backend being proxied"`
+	IdpMetadataUrl          string            `usage:"[URL] of the IdP's metadata XML"`
+	IdpCaPath               string            `usage:"Optional [path] to a CA certificate PEM file for the IdP"`
 	NameIdFormat            string            `usage:"One of unspecified, transient (default), email, or persistent to use a standard format or give a full URN of the name ID format"`
-	SpKeyPath               string            `default:"saml-auth-proxy.key" usage:"Path to the X509 private key PEM file for this SP"`
-	SpCertPath              string            `default:"saml-auth-proxy.cert" usage:"Path to the X509 public certificate PEM file for this SP"`
-	NameIdMapping           string            `usage:"Name of the request header to convey the SAML nameID/subject"`
-	AttributeHeaderMappings map[string]string `usage:"Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header"`
-	NewAuthWebhookUrl       string            `usage:"URL of webhook that will get POST'ed when a new authentication is processed"`
-	AuthorizeAttribute      string            `usage:"Enables authorization and specifies the attribute to check for authorized values"`
-	AuthorizeValues         []string          `usage:"Specifies the possible values that must be present in the authorize attribute"`
+	SpKeyPath               string            `default:"saml-auth-proxy.key" usage:"The [path] to the X509 private key PEM file for this SP"`
+	SpCertPath              string            `default:"saml-auth-proxy.cert" usage:"The [path] to the X509 public certificate PEM file for this SP"`
+	NameIdMapping           string            `usage:"Name of the request [header] to convey the SAML nameID/subject"`
+	AttributeHeaderMappings map[string]string `usage:"Comma separated list of [attribute=header] pairs mapping SAML IdP response attributes to forwarded request header"`
+	NewAuthWebhookUrl       string            `usage:"[URL] of webhook that will get POST'ed when a new authentication is processed"`
+	AuthorizeAttribute      string            `usage:"Enables authorization and specifies the [attribute] to check for authorized values"`
+	AuthorizeValues         []string          `usage:"If enabled, comma separated list of [values] that must be present in the authorize attribute"`
 }
 
 func Start(cfg *Config) error {
