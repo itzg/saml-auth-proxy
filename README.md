@@ -35,8 +35,9 @@ Provides a SAML SP authentication proxy for backend web services
     	The path to the X509 private key PEM file for this SP (env SAML_PROXY_SP_KEY_PATH) (default "saml-auth-proxy.key")
 ```
 
-The snake-case values, such as `SAML_PROXY_BACKEND_URL`, are the equivalent environment variables
-that can be set instead of passing configuration via the command-line.
+The snake-case values, such as `SAML_PROXY_BACKEND_URL`, are the equivalent environment variables that can be set instead of passing configuration via the command-line. 
+
+The command-line argument usage renders with only a single leading dash, but GNU-style double-dashes can be used also, such as `--sp-key-path`.
 
 ## Authorization
 
