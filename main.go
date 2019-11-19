@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/itzg/go-flagsfiller"
 	"github.com/itzg/saml-auth-proxy/server"
-	"github.com/jamiealquiza/envy"
 	"log"
 	"os"
 )
@@ -18,13 +17,12 @@ var (
 func main() {
 	var serverConfig server.Config
 
-	filler := flagsfiller.New()
+	filler := flagsfiller.New(flagsfiller.WithEnv("SamlProxy"))
 	err := filler.Fill(flag.CommandLine, &serverConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	envy.Parse("SAML_PROXY")
 	flag.Parse()
 
 	if serverConfig.Version {

@@ -14,7 +14,7 @@ import (
 )
 
 type Config struct {
-	Version                 bool              `usage:"show version and exit"`
+	Version                 bool              `usage:"show version and exit" env:""`
 	Bind                    string            `default:":8080" usage:"[host:port] to bind for serving HTTP"`
 	BaseUrl                 string            `usage:"External [URL] of this proxy"`
 	BackendUrl              string            `usage:"[URL] of the backend being proxied"`
