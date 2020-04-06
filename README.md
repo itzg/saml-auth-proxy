@@ -131,3 +131,15 @@ To try out authorization you would add the following arguments referencing somet
 
 Now you can open your browser and navigate to `http://${BASE_FQDN}:8080`. You will be redirected
 via SSOCircle's login page and then be returned with access to Grafana.
+
+## Troubleshooting
+
+### ERROR: failed to decrypt response
+
+If the SAML redirect results in an "Unauthorized" page and the saml-auth-proxy outputs a log like the following, then be sure to double check that the subject/CN of the generated certificate matches the FQDN of the deployed endpoint.
+
+```
+ERROR: failed to decrypt response: crypto/rsa: decryption error
+```
+
+After correcting the certificate and key, be sure to regenerate the metadata and provide that to the ADFS/SAML IdP owner.
