@@ -136,7 +136,7 @@ via SSOCircle's login page and then be returned with access to Grafana.
 
 ### ERROR: failed to decrypt response
 
-If the SAML redirect results in an "Unauthorized" page and the saml-auth-proxy outputs a log like the following, then be sure to double check that the subject/CN of the generated certificate matches the FQDN of the deployed endpoint.
+If the SAML redirect results in a "Forbidden" white-page and the saml-auth-proxy outputs a log like the following, then be sure to double check that the subject/CN of the generated certificate matches the FQDN of the deployed endpoint.
 
 ```
 ERROR: failed to decrypt response: crypto/rsa: decryption error
