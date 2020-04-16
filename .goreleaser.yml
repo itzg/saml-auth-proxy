@@ -12,14 +12,14 @@ builds:
   goarch:
     - amd64
     - arm
-archive:
-  replacements:
-    darwin: macosx
-    386: x86_32
-    amd64: x86_64
-  format: binary
-  files:
-    - none*
+archives:
+  - replacements:
+      darwin: macosx
+      386: x86_32
+      amd64: x86_64
+    format: binary
+    files:
+      - none*
 dockers:
   - image_templates:
       - "itzg/{{.ProjectName}}:latest"
