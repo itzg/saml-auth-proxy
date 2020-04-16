@@ -4,13 +4,15 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
-	"github.com/crewjam/saml"
-	"github.com/crewjam/saml/samlsp"
-	"github.com/pkg/errors"
+	"encoding/xml"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+
+	"github.com/crewjam/saml"
+	"github.com/crewjam/saml/samlsp"
+	"github.com/pkg/errors"
 )
 
 type Config struct {
@@ -18,7 +20,7 @@ type Config struct {
 	Bind                    string            `default:":8080" usage:"[host:port] to bind for serving HTTP"`
 	BaseUrl                 string            `usage:"External [URL] of this proxy"`
 	BackendUrl              string            `usage:"[URL] of the backend being proxied"`
-	IdpMetadataUrl          string            `usage:"[URL] of the IdP's metadata XML"`
+	IdpMetadataUrl          string            `usage:"[URL] of the IdP's metadata XML, can be a local file by specifying the file:// scheme"`
 	IdpCaPath               string            `usage:"Optional [path] to a CA certificate PEM file for the IdP"`
 	NameIdFormat            string            `usage:"One of unspecified, transient (default), email, or persistent to use a standard format or give a full URN of the name ID format"`
 	SpKeyPath               string            `default:"saml-auth-proxy.key" usage:"The [path] to the X509 private key PEM file for this SP"`
@@ -56,14 +58,30 @@ func Start(cfg *Config) error {
 		return errors.Wrap(err, "Failed to setup HTTP client")
 	}
 
-	samlSP, err := samlsp.New(samlsp.Options{
-		URL:            *rootUrl,
-		Key:            keyPair.PrivateKey.(*rsa.PrivateKey),
-		Certificate:    keyPair.Leaf,
-		IDPMetadataURL: idpMetadataUrl,
-		CookieDomain:   rootUrl.Hostname(),
-		HTTPClient:     httpClient,
-	})
+	samlOpts := samlsp.Options{
+		URL:          *rootUrl,
+		Key:          keyPair.PrivateKey.(*rsa.PrivateKey),
+		Certificate:  keyPair.Leaf,
+		CookieDomain: rootUrl.Hostname(),
+		HTTPClient:   httpClient,
+	}
+
+	if idpMetadataUrl.Scheme == "file" {
+		data, err := ioutil.ReadFile(idpMetadataUrl.Path)
+		if err != nil {
+			return errors.Wrap(err, "Failed to read IdP metadata file.")
+		}
+		idpMetadata := &saml.EntityDescriptor{}
+		err = xml.Unmarshal(data, idpMetadata)
+		if err != nil {
+			return errors.Wrap(err, "Failed to unmarshal IdP metadata XML.")
+		}
+		samlOpts.IDPMetadata = idpMetadata
+	} else {
+		samlOpts.IDPMetadataURL = idpMetadataUrl
+	}
+
+	samlSP, err := samlsp.New(samlOpts)
 	if err != nil {
 		return errors.Wrap(err, "Failed to initialize SP")
 	}

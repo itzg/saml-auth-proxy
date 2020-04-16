@@ -22,7 +22,7 @@ Provides a SAML SP authentication proxy for backend web services
   -idp-ca-path path
     	Optional path to a CA certificate PEM file for the IdP (env SAML_PROXY_IDP_CA_PATH)
   -idp-metadata-url URL
-    	URL of the IdP's metadata XML (env SAML_PROXY_IDP_METADATA_URL)
+    	URL of the IdP's metadata XML, can also be a local file, in which case the scheme must be "file://" (env SAML_PROXY_IDP_METADATA_URL)
   -name-id-format string
     	One of unspecified, transient (default), email, or persistent to use a standard format or give a full URN of the name ID format (env SAML_PROXY_NAME_ID_FORMAT)
   -name-id-mapping header
