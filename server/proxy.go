@@ -41,9 +41,16 @@ func NewProxy(cfg *Config) (*proxy, error) {
 		return nil, errors.Wrap(err, "Failed to parse backend URL")
 	}
 
+	client := &http.Client{
+		// don't follow redirects
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
 	proxy := &proxy{
 		config:        cfg,
-		client:        &http.Client{},
+		client:        client,
 		backendUrl:    backendUrl,
 		newTokenCache: cache.New(newTokenCacheExpiration, newTokenCacheCleanupInterval),
 	}
