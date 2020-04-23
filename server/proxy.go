@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/patrickmn/go-cache"
-	"github.com/pkg/errors"
 	"io"
 	"log"
 	"net"
@@ -38,7 +37,7 @@ type proxy struct {
 func NewProxy(cfg *Config) (*proxy, error) {
 	backendUrl, err := url.Parse(cfg.BackendUrl)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to parse backend URL")
+		return nil, fmt.Errorf("failed to parse backend URL: %w", err)
 	}
 
 	client := &http.Client{

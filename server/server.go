@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
-	"github.com/pkg/errors"
 )
 
 const fetchMetadataTimeout = 30 * time.Second
@@ -40,27 +40,27 @@ type Config struct {
 func Start(ctx context.Context, cfg *Config) error {
 	keyPair, err := tls.LoadX509KeyPair(cfg.SpCertPath, cfg.SpKeyPath)
 	if err != nil {
-		return errors.Wrap(err, "Failed to load SP key and certificate")
+		return fmt.Errorf("failed to load SP key and certificate: %w", err)
 	}
 
 	keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
 	if err != nil {
-		return errors.Wrap(err, "Failed to parse SP certificate")
+		return fmt.Errorf("failed to parse SP certificate: %w", err)
 	}
 
 	idpMetadataUrl, err := url.Parse(cfg.IdpMetadataUrl)
 	if err != nil {
-		return errors.Wrap(err, "Failed to parse IdP metdata URL")
+		return fmt.Errorf("failed to parse IdP metdata URL: %w", err)
 	}
 
 	rootUrl, err := url.Parse(cfg.BaseUrl)
 	if err != nil {
-		return errors.Wrap(err, "Failed to parse base URL")
+		return fmt.Errorf("failed to parse base URL: %w", err)
 	}
 
 	httpClient, err := setupHttpClient(cfg.IdpCaPath)
 	if err != nil {
-		return errors.Wrap(err, "Failed to setup HTTP client")
+		return fmt.Errorf("failed to setup HTTP client: %w", err)
 	}
 
 	samlOpts := samlsp.Options{
@@ -71,12 +71,12 @@ func Start(ctx context.Context, cfg *Config) error {
 
 	samlOpts.IDPMetadata, err = fetchMetadata(ctx, httpClient, idpMetadataUrl)
 	if err != nil {
-		return errors.Wrap(err, "Failed to fetch/load IdP metadata")
+		return fmt.Errorf("failed to fetch/load IdP metadata: %w", err)
 	}
 
 	middleware, err := samlsp.New(samlOpts)
 	if err != nil {
-		return errors.Wrap(err, "Failed to initialize SP")
+		return fmt.Errorf("failed to initialize SP: %w", err)
 	}
 
 	switch cfg.NameIdFormat {
@@ -110,7 +110,7 @@ func Start(ctx context.Context, cfg *Config) error {
 
 	proxy, err := NewProxy(cfg)
 	if err != nil {
-		return errors.Wrap(err, "Failed to create proxy")
+		return fmt.Errorf("failed to create proxy: %w", err)
 	}
 
 	app := http.HandlerFunc(proxy.handler)
@@ -127,12 +127,12 @@ func fetchMetadata(ctx context.Context, client *http.Client, idpMetadataUrl *url
 	if idpMetadataUrl.Scheme == "file" {
 		data, err := ioutil.ReadFile(idpMetadataUrl.Path)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to read IdP metadata file.")
+			return nil, fmt.Errorf("failed to read IdP metadata file.: %w", err)
 		}
 		idpMetadata := &saml.EntityDescriptor{}
 		err = xml.Unmarshal(data, idpMetadata)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to unmarshal IdP metadata XML.")
+			return nil, fmt.Errorf("failed to unmarshal IdP metadata XML.: %w", err)
 		}
 		return idpMetadata, nil
 	} else {
@@ -153,7 +153,7 @@ func setupHttpClient(idpCaFile string) (*http.Client, error) {
 
 	certs, err := ioutil.ReadFile(idpCaFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to read IdP CA file")
+		return nil, fmt.Errorf("failed to read IdP CA file: %w", err)
 	}
 
 	if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
