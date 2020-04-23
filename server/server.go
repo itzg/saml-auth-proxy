@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
@@ -16,6 +17,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const fetchMetadataTimeout = 30 * time.Second
+
 type Config struct {
 	Version                 bool              `usage:"show version and exit" env:""`
 	Bind                    string            `default:":8080" usage:"[host:port] to bind for serving HTTP"`
@@ -23,7 +26,7 @@ type Config struct {
 	BackendUrl              string            `usage:"[URL] of the backend being proxied"`
 	IdpMetadataUrl          string            `usage:"[URL] of the IdP's metadata XML, can be a local file by specifying the file:// scheme"`
 	IdpCaPath               string            `usage:"Optional [path] to a CA certificate PEM file for the IdP"`
-	NameIdFormat            string            `usage:"One of unspecified, transient (default), email, or persistent to use a standard format or give a full URN of the name ID format"`
+	NameIdFormat            string            `usage:"One of unspecified, transient, email, or persistent to use a standard format or give a full URN of the name ID format" default:"transient"`
 	SpKeyPath               string            `default:"saml-auth-proxy.key" usage:"The [path] to the X509 private key PEM file for this SP"`
 	SpCertPath              string            `default:"saml-auth-proxy.cert" usage:"The [path] to the X509 public certificate PEM file for this SP"`
 	NameIdMapping           string            `usage:"Name of the request [header] to convey the SAML nameID/subject"`
@@ -34,7 +37,7 @@ type Config struct {
 	CookieMaxAge            time.Duration     `usage:"Specifies the amount of time the authentication token will remain valid" default:"2h"`
 }
 
-func Start(cfg *Config) error {
+func Start(ctx context.Context, cfg *Config) error {
 	keyPair, err := tls.LoadX509KeyPair(cfg.SpCertPath, cfg.SpKeyPath)
 	if err != nil {
 		return errors.Wrap(err, "Failed to load SP key and certificate")
@@ -61,46 +64,49 @@ func Start(cfg *Config) error {
 	}
 
 	samlOpts := samlsp.Options{
-		URL:          *rootUrl,
-		Key:          keyPair.PrivateKey.(*rsa.PrivateKey),
-		Certificate:  keyPair.Leaf,
-		HTTPClient:   httpClient,
-		CookieMaxAge: cfg.CookieMaxAge,
-		CookieDomain: rootUrl.Hostname(),
+		URL:         *rootUrl,
+		Key:         keyPair.PrivateKey.(*rsa.PrivateKey),
+		Certificate: keyPair.Leaf,
 	}
 
-	if idpMetadataUrl.Scheme == "file" {
-		data, err := ioutil.ReadFile(idpMetadataUrl.Path)
-		if err != nil {
-			return errors.Wrap(err, "Failed to read IdP metadata file.")
-		}
-		idpMetadata := &saml.EntityDescriptor{}
-		err = xml.Unmarshal(data, idpMetadata)
-		if err != nil {
-			return errors.Wrap(err, "Failed to unmarshal IdP metadata XML.")
-		}
-		samlOpts.IDPMetadata = idpMetadata
-	} else {
-		samlOpts.IDPMetadataURL = idpMetadataUrl
+	samlOpts.IDPMetadata, err = fetchMetadata(ctx, httpClient, idpMetadataUrl)
+	if err != nil {
+		return errors.Wrap(err, "Failed to fetch/load IdP metadata")
 	}
 
-	samlSP, err := samlsp.New(samlOpts)
+	middleware, err := samlsp.New(samlOpts)
 	if err != nil {
 		return errors.Wrap(err, "Failed to initialize SP")
 	}
 
 	switch cfg.NameIdFormat {
 	case "unspecified":
-		samlSP.ServiceProvider.AuthnNameIDFormat = saml.UnspecifiedNameIDFormat
+		middleware.ServiceProvider.AuthnNameIDFormat = saml.UnspecifiedNameIDFormat
 	case "transient":
-		samlSP.ServiceProvider.AuthnNameIDFormat = saml.TransientNameIDFormat
+		middleware.ServiceProvider.AuthnNameIDFormat = saml.TransientNameIDFormat
 	case "email":
-		samlSP.ServiceProvider.AuthnNameIDFormat = saml.EmailAddressNameIDFormat
+		middleware.ServiceProvider.AuthnNameIDFormat = saml.EmailAddressNameIDFormat
 	case "persistent":
-		samlSP.ServiceProvider.AuthnNameIDFormat = saml.PersistentNameIDFormat
+		middleware.ServiceProvider.AuthnNameIDFormat = saml.PersistentNameIDFormat
 	default:
-		samlSP.ServiceProvider.AuthnNameIDFormat = saml.NameIDFormat(cfg.NameIdFormat)
+		middleware.ServiceProvider.AuthnNameIDFormat = saml.NameIDFormat(cfg.NameIdFormat)
 	}
+
+	// This is redundant with RequestTracker created in samlsp.New, but prepares for deprecation switch
+	middleware.RequestTracker = samlsp.DefaultRequestTracker(samlsp.Options{
+		URL: *rootUrl,
+		Key: keyPair.PrivateKey.(*rsa.PrivateKey),
+	}, &middleware.ServiceProvider)
+
+	// This is redundant with Session created in samlsp.New, but prepares for deprecation switch
+	// Library is still using same Options struct for all of these
+	// ...so the fields are flagged as deprecated but library
+	middleware.Session = samlsp.DefaultSessionProvider(samlsp.Options{
+		URL:          *rootUrl,
+		Key:          keyPair.PrivateKey.(*rsa.PrivateKey),
+		CookieMaxAge: cfg.CookieMaxAge,
+		CookieDomain: rootUrl.Hostname(),
+	})
 
 	proxy, err := NewProxy(cfg)
 	if err != nil {
@@ -108,18 +114,36 @@ func Start(cfg *Config) error {
 	}
 
 	app := http.HandlerFunc(proxy.handler)
-	http.Handle("/saml/", samlSP)
+	http.Handle("/saml/", middleware)
 	http.Handle("/_health", http.HandlerFunc(proxy.health))
-	http.Handle("/", samlSP.RequireAccount(app))
+	http.Handle("/", middleware.RequireAccount(app))
 
 	log.Printf("Serving requests for %s -> %s at %s",
 		cfg.BaseUrl, cfg.BackendUrl, cfg.Bind)
 	return http.ListenAndServe(cfg.Bind, nil)
 }
 
+func fetchMetadata(ctx context.Context, client *http.Client, idpMetadataUrl *url.URL) (*saml.EntityDescriptor, error) {
+	if idpMetadataUrl.Scheme == "file" {
+		data, err := ioutil.ReadFile(idpMetadataUrl.Path)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to read IdP metadata file.")
+		}
+		idpMetadata := &saml.EntityDescriptor{}
+		err = xml.Unmarshal(data, idpMetadata)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to unmarshal IdP metadata XML.")
+		}
+		return idpMetadata, nil
+	} else {
+		reqCtx, _ := context.WithTimeout(ctx, fetchMetadataTimeout)
+		return samlsp.FetchMetadata(reqCtx, client, *idpMetadataUrl)
+	}
+}
+
 func setupHttpClient(idpCaFile string) (*http.Client, error) {
 	if idpCaFile == "" {
-		return nil, nil
+		return http.DefaultClient, nil
 	}
 
 	rootCAs, _ := x509.SystemCertPool()

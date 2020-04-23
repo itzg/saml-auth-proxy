@@ -58,17 +58,26 @@ func NewProxy(cfg *Config) (*proxy, error) {
 	return proxy, nil
 }
 
-func (p *proxy) health(respOutWriter http.ResponseWriter, reqIn *http.Request) {
+func (p *proxy) health(respOutWriter http.ResponseWriter, _ *http.Request) {
 	respOutWriter.Header().Set("Content-Type", "text/plain")
 	respOutWriter.WriteHeader(200)
-	respOutWriter.Write([]byte("OK"))
+	_, err := respOutWriter.Write([]byte("OK"))
+	if err != nil {
+		log.Printf("ERR failed to write health response body: %s", err.Error())
+	}
 }
 
 func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) {
 
-	authToken := samlsp.Token(reqIn.Context())
+	session := samlsp.SessionFromContext(reqIn.Context())
+	sessionClaims, ok := session.(samlsp.JWTSessionClaims)
+	if !ok {
+		log.Printf("ERR session is not expected type")
+		respOutWriter.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	authUsing, authorized := p.authorized(authToken, reqIn)
+	authUsing, authorized := p.authorized(&sessionClaims)
 	if !authorized {
 		respOutWriter.WriteHeader(http.StatusUnauthorized)
 		return
@@ -93,11 +102,11 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 
 	copyHeaders(reqOut.Header, reqIn.Header)
 
-	p.checkForNewAuth(authToken)
+	p.checkForNewAuth(&sessionClaims)
 
 	if p.config.AttributeHeaderMappings != nil {
 		for attr, hdr := range p.config.AttributeHeaderMappings {
-			if values, ok := authToken.Attributes[attr]; ok {
+			if values, ok := sessionClaims.GetAttributes()[attr]; ok {
 				for _, value := range values {
 					reqOut.Header.Add(hdr, value)
 				}
@@ -106,7 +115,7 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	}
 	if p.config.NameIdMapping != "" {
 		reqOut.Header.Set(p.config.NameIdMapping,
-			authToken.StandardClaims.Subject)
+			sessionClaims.Subject)
 	}
 
 	reqOut.Header.Set(HeaderForwardedHost, reqIn.Host)
@@ -123,21 +132,29 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	}
 
 	respIn, err := p.client.Do(reqOut)
+	if err != nil {
+		respOutWriter.WriteHeader(http.StatusBadGateway)
+		_, _ = respOutWriter.Write([]byte(err.Error()))
+		return
+	}
 	defer respIn.Body.Close()
 	copyHeaders(respOutWriter.Header(), respIn.Header)
 	respOutWriter.WriteHeader(respIn.StatusCode)
-	io.Copy(respOutWriter, respIn.Body)
+	_, err = io.Copy(respOutWriter, respIn.Body)
+	if err != nil {
+		log.Printf("ERR failed to transfer backend response body: %s", err.Error())
+	}
 }
 
-func (p *proxy) checkForNewAuth(authToken *samlsp.AuthorizationToken) {
-	if p.config.NewAuthWebhookUrl != "" && authToken.IssuedAt >= time.Now().Unix()-1 {
-		err := p.newTokenCache.Add(authToken.Id, authToken, cache.DefaultExpiration)
+func (p *proxy) checkForNewAuth(sessionClaims *samlsp.JWTSessionClaims) {
+	if p.config.NewAuthWebhookUrl != "" && sessionClaims.IssuedAt >= time.Now().Unix()-1 {
+		err := p.newTokenCache.Add(sessionClaims.Id, sessionClaims, cache.DefaultExpiration)
 		if err == nil {
-			log.Printf("Issued new authentication token: %+v", authToken)
+			log.Printf("Issued new authentication token: %+v", sessionClaims)
 
 			var postBody bytes.Buffer
 			encoder := json.NewEncoder(&postBody)
-			err := encoder.Encode(authToken.Attributes)
+			err := encoder.Encode(sessionClaims.GetAttributes())
 			if err == nil {
 				_, err := http.Post(p.config.NewAuthWebhookUrl, "application/json", &postBody)
 				if err != nil {
@@ -153,9 +170,9 @@ func (p *proxy) checkForNewAuth(authToken *samlsp.AuthorizationToken) {
 // authorized returns an boolean indication if the request is authorized.
 // The initial string return value is an attribute=value pair that was used to authorize the request.
 // If authorization was not configured the returned string is empty.
-func (p *proxy) authorized(token *samlsp.AuthorizationToken, request *http.Request) (string, bool) {
+func (p *proxy) authorized(sessionClaims *samlsp.JWTSessionClaims) (string, bool) {
 	if p.config.AuthorizeAttribute != "" {
-		values, exists := token.Attributes[p.config.AuthorizeAttribute]
+		values, exists := sessionClaims.GetAttributes()[p.config.AuthorizeAttribute]
 		if !exists {
 			return "", false
 		}

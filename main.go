@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/itzg/go-flagsfiller"
@@ -34,8 +35,9 @@ func main() {
 	checkRequired(serverConfig.BackendUrl, "backend-url")
 	checkRequired(serverConfig.IdpMetadataUrl, "idp-metadata-url")
 
+	ctx := context.Background()
 	// server only returns when there's an error
-	log.Fatal(server.Start(&serverConfig))
+	log.Fatal(server.Start(ctx, &serverConfig))
 }
 
 func checkRequired(value string, name string) {
