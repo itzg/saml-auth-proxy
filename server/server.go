@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -30,6 +31,7 @@ type Config struct {
 	NewAuthWebhookUrl       string            `usage:"[URL] of webhook that will get POST'ed when a new authentication is processed"`
 	AuthorizeAttribute      string            `usage:"Enables authorization and specifies the [attribute] to check for authorized values"`
 	AuthorizeValues         []string          `usage:"If enabled, comma separated list of [values] that must be present in the authorize attribute"`
+	CookieMaxAge            time.Duration     `usage:"Specifies the amount of time the authentication token will remain valid" default:"2h"`
 }
 
 func Start(cfg *Config) error {
@@ -62,8 +64,9 @@ func Start(cfg *Config) error {
 		URL:          *rootUrl,
 		Key:          keyPair.PrivateKey.(*rsa.PrivateKey),
 		Certificate:  keyPair.Leaf,
-		CookieDomain: rootUrl.Hostname(),
 		HTTPClient:   httpClient,
+		CookieMaxAge: cfg.CookieMaxAge,
+		CookieDomain: rootUrl.Hostname(),
 	}
 
 	if idpMetadataUrl.Scheme == "file" {
