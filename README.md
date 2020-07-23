@@ -7,32 +7,38 @@ Provides a SAML SP authentication proxy for backend web services
 ## Usage
 
 ```text
+  -allow-idp-initiated
+        If set, allows for IdP initiated authentication flow (env SAML_PROXY_ALLOW_IDP_INITIATED)
   -attribute-header-mappings attribute=header
-    	Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header (env SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS)
+        Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header (env SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS)
   -authorize-attribute attribute
-    	Enables authorization and specifies the attribute to check for authorized values (env SAML_PROXY_AUTHORIZE_ATTRIBUTE)
+        Enables authorization and specifies the attribute to check for authorized values (env SAML_PROXY_AUTHORIZE_ATTRIBUTE)
   -authorize-values values
-    	If enabled, comma separated list of values that must be present in the authorize attribute (env SAML_PROXY_AUTHORIZE_VALUES)
+        If enabled, comma separated list of values that must be present in the authorize attribute (env SAML_PROXY_AUTHORIZE_VALUES)
   -backend-url URL
-    	URL of the backend being proxied (env SAML_PROXY_BACKEND_URL)
+        URL of the backend being proxied (env SAML_PROXY_BACKEND_URL)
   -base-url URL
-    	External URL of this proxy (env SAML_PROXY_BASE_URL)
+        External URL of this proxy (env SAML_PROXY_BASE_URL)
   -bind host:port
-    	host:port to bind for serving HTTP (env SAML_PROXY_BIND) (default ":8080")
+        host:port to bind for serving HTTP (env SAML_PROXY_BIND) (default ":8080")
+  -cookie-max-age duration
+        Specifies the amount of time the authentication token will remain valid (env SAML_PROXY_COOKIE_MAX_AGE) (default 2h0m0s)
   -idp-ca-path path
-    	Optional path to a CA certificate PEM file for the IdP (env SAML_PROXY_IDP_CA_PATH)
+        Optional path to a CA certificate PEM file for the IdP (env SAML_PROXY_IDP_CA_PATH)
   -idp-metadata-url URL
-    	URL of the IdP's metadata XML, can also be a local file, in which case the scheme must be "file://" (env SAML_PROXY_IDP_METADATA_URL)
+        URL of the IdP's metadata XML, can be a local file by specifying the file:// scheme (env SAML_PROXY_IDP_METADATA_URL)
   -name-id-format string
-    	One of unspecified, transient (default), email, or persistent to use a standard format or give a full URN of the name ID format (env SAML_PROXY_NAME_ID_FORMAT)
+        One of unspecified, transient, email, or persistent to use a standard format or give a full URN of the name ID format (env SAML_PROXY_NAME_ID_FORMAT) (default "transient")
   -name-id-mapping header
-    	Name of the request header to convey the SAML nameID/subject (env SAML_PROXY_NAME_ID_MAPPING)
+        Name of the request header to convey the SAML nameID/subject (env SAML_PROXY_NAME_ID_MAPPING)
   -new-auth-webhook-url URL
-    	URL of webhook that will get POST'ed when a new authentication is processed (env SAML_PROXY_NEW_AUTH_WEBHOOK_URL)
+        URL of webhook that will get POST'ed when a new authentication is processed (env SAML_PROXY_NEW_AUTH_WEBHOOK_URL)
   -sp-cert-path path
-    	The path to the X509 public certificate PEM file for this SP (env SAML_PROXY_SP_CERT_PATH) (default "saml-auth-proxy.cert")
+        The path to the X509 public certificate PEM file for this SP (env SAML_PROXY_SP_CERT_PATH) (default "saml-auth-proxy.cert")
   -sp-key-path path
-    	The path to the X509 private key PEM file for this SP (env SAML_PROXY_SP_KEY_PATH) (default "saml-auth-proxy.key")
+        The path to the X509 private key PEM file for this SP (env SAML_PROXY_SP_KEY_PATH) (default "saml-auth-proxy.key")
+  -version
+        show version and exit
 ```
 
 The snake-case values, such as `SAML_PROXY_BACKEND_URL`, are the equivalent environment variables that can be set instead of passing configuration via the command-line. 

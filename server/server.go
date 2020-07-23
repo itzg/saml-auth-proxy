@@ -35,6 +35,7 @@ type Config struct {
 	AuthorizeAttribute      string            `usage:"Enables authorization and specifies the [attribute] to check for authorized values"`
 	AuthorizeValues         []string          `usage:"If enabled, comma separated list of [values] that must be present in the authorize attribute"`
 	CookieMaxAge            time.Duration     `usage:"Specifies the amount of time the authentication token will remain valid" default:"2h"`
+	AllowIdpInitiated       bool              `usage:"If set, allows for IdP initiated authentication flow"`
 }
 
 func Start(ctx context.Context, cfg *Config) error {
@@ -64,9 +65,10 @@ func Start(ctx context.Context, cfg *Config) error {
 	}
 
 	samlOpts := samlsp.Options{
-		URL:         *rootUrl,
-		Key:         keyPair.PrivateKey.(*rsa.PrivateKey),
-		Certificate: keyPair.Leaf,
+		URL:               *rootUrl,
+		Key:               keyPair.PrivateKey.(*rsa.PrivateKey),
+		Certificate:       keyPair.Leaf,
+		AllowIDPInitiated: cfg.AllowIdpInitiated,
 	}
 
 	samlOpts.IDPMetadata, err = fetchMetadata(ctx, httpClient, idpMetadataUrl)
