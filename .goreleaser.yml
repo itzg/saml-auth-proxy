@@ -37,6 +37,8 @@ changelog:
     - '^misc:'
     - '^ci:'
     - '^test:'
+release:
+  prerelease: auto
 scoop:
   bucket:
     owner: itzg
