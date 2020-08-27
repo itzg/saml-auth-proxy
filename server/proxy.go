@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/crewjam/saml/samlsp"
-	"github.com/patrickmn/go-cache"
 	"io"
 	"log"
 	"net"
@@ -13,6 +11,9 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/crewjam/saml/samlsp"
+	"github.com/patrickmn/go-cache"
 )
 
 const (
@@ -112,6 +113,15 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 			}
 		}
 	}
+
+	if p.config.AttributeHeaderWildcard != nil {
+		for attr, values := range sessionClaims.GetAttributes() {
+			for _, value := range values {
+				reqOut.Header.Add("X-SW-"+attr, value)
+			}
+		}
+	}
+
 	if p.config.NameIdMapping != "" {
 		reqOut.Header.Set(p.config.NameIdMapping,
 			sessionClaims.Subject)
