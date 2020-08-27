@@ -11,6 +11,8 @@ Provides a SAML SP authentication proxy for backend web services
         If set, allows for IdP initiated authentication flow (env SAML_PROXY_ALLOW_IDP_INITIATED)
   -attribute-header-mappings attribute=header
         Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header (env SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS)
+  -attribute-header-wildcard
+    	Maps all SAML into X-SW- headers (env SAML_PROXY_ATTRIBUTE_HEADER_WILDCARD)
   -authorize-attribute attribute
         Enables authorization and specifies the attribute to check for authorized values (env SAML_PROXY_AUTHORIZE_ATTRIBUTE)
   -authorize-values values
