@@ -24,6 +24,7 @@ dockers:
   - image_templates:
       - "itzg/{{.ProjectName}}:latest"
       - "itzg/{{.ProjectName}}:{{ .Tag }}"
+    dockerfile: Dockerfile.release
 checksum:
   name_template: 'checksums.txt'
 snapshot:
