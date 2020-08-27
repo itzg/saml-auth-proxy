@@ -114,10 +114,10 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 		}
 	}
 
-	if p.config.AttributeHeaderWildcard == true {
+	if p.config.AttributeHeaderWildcard != "" {
 		for attr, values := range sessionClaims.GetAttributes() {
 			for _, value := range values {
-				reqOut.Header.Add("X-*Saml*-"+attr, value)
+				reqOut.Header.Add(p.config.AttributeHeaderWildcard+attr, value)
 			}
 		}
 	}
