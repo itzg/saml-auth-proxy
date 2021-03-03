@@ -36,6 +36,7 @@ type Config struct {
 	AuthorizeAttribute      string            `usage:"Enables authorization and specifies the [attribute] to check for authorized values"`
 	AuthorizeValues         []string          `usage:"If enabled, comma separated list of [values] that must be present in the authorize attribute"`
 	CookieMaxAge            time.Duration     `usage:"Specifies the amount of time the authentication token will remain valid" default:"2h"`
+	CookieDomain            string            `usage:"Overrides the domain set on the session cookie. By default the BaseUrl host is used."`
 	AllowIdpInitiated       bool              `usage:"If set, allows for IdP initiated authentication flow"`
 }
 
@@ -101,6 +102,11 @@ func Start(ctx context.Context, cfg *Config) error {
 		Key: keyPair.PrivateKey.(*rsa.PrivateKey),
 	}, &middleware.ServiceProvider)
 
+	var cookieDomain = cfg.CookieDomain
+	if cookieDomain == "" {
+		cookieDomain = rootUrl.Hostname()
+	}
+
 	// This is redundant with Session created in samlsp.New, but prepares for deprecation switch
 	// Library is still using same Options struct for all of these
 	// ...so the fields are flagged as deprecated but library
@@ -108,7 +114,7 @@ func Start(ctx context.Context, cfg *Config) error {
 		URL:          *rootUrl,
 		Key:          keyPair.PrivateKey.(*rsa.PrivateKey),
 		CookieMaxAge: cfg.CookieMaxAge,
-		CookieDomain: rootUrl.Hostname(),
+		CookieDomain: cookieDomain,
 	})
 
 	proxy, err := NewProxy(cfg)

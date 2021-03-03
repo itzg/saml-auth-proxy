@@ -25,6 +25,8 @@ Provides a SAML SP authentication proxy for backend web services
         host:port to bind for serving HTTP (env SAML_PROXY_BIND) (default ":8080")
   -cookie-max-age duration
         Specifies the amount of time the authentication token will remain valid (env SAML_PROXY_COOKIE_MAX_AGE) (default 2h0m0s)
+  -cookie-domain string
+        Overrides the domain set on the session cookie. By default the BaseUrl host is used. (env SAML_PROXY_COOKIE_DOMAIN)
   -idp-ca-path path
         Optional path to a CA certificate PEM file for the IdP (env SAML_PROXY_IDP_CA_PATH)
   -idp-metadata-url URL
