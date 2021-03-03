@@ -102,6 +102,14 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 
 	copyHeaders(reqOut.Header, reqIn.Header)
 
+	reqOut.Header.Del("Cookie")
+	cookies := reqIn.Cookies()
+	for _, cookie := range cookies {
+		if cookie.Name != tokenCookieName {
+			reqOut.Header.Add("Cookie", cookie.String())
+		}
+	}
+
 	p.checkForNewAuth(&sessionClaims)
 
 	if p.config.AttributeHeaderMappings != nil {

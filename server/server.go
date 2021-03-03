@@ -19,6 +19,8 @@ import (
 
 const fetchMetadataTimeout = 30 * time.Second
 
+const tokenCookieName = "token"
+
 type Config struct {
 	Version                 bool              `usage:"show version and exit" env:""`
 	Bind                    string            `default:":8080" usage:"[host:port] to bind for serving HTTP"`
@@ -115,6 +117,7 @@ func Start(ctx context.Context, cfg *Config) error {
 		Key:          keyPair.PrivateKey.(*rsa.PrivateKey),
 		CookieMaxAge: cfg.CookieMaxAge,
 		CookieDomain: cookieDomain,
+		CookieName:   tokenCookieName,
 	})
 
 	proxy, err := NewProxy(cfg)
