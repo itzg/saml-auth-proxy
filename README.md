@@ -113,7 +113,7 @@ Start saml-auth-proxy using:
 ./saml-auth-proxy \
   --base-url http://${BASE_FQDN}:8080 \
   --backend-url http://locahost:3000 \
-  --idp-metadata-url https://idp.ssocircle.com/ \
+  --idp-metadata-url=https://samltest.id/saml/idp \
   --attribute-header-mappings UserID=x-webauth-user
 ```
 
@@ -123,8 +123,8 @@ Generate your SP's SAML metadata by accessing the built-in metadata endpoint:
 curl localhost:8080/saml/metadata > saml-sp-metadata.xml
 ```
 
-You can post the content of the `saml-sp-metadata.xml` file at 
-[SSOCircle's SP metadata page](https://idp.ssocircle.com/sso/hos/ManageSPMetadata.jsp).
+You can upload the  file `saml-sp-metadata.xml` file at 
+[samltest.id](https://samltest.id/upload.php).
 
 **Note** you will also be selecting the attributes that will be included in the assertion in the SAML authentication response, such as: 
 - `FirstName`
@@ -132,15 +132,14 @@ You can post the content of the `saml-sp-metadata.xml` file at
 - `EmailAddress`
 - `UserID`
 
-To try out authorization you would add the following arguments referencing something like `UserID` and one or more expected SSOCircle user's values:
+To try out authorization you would add the following arguments referencing something like `UserID` and one or more expected SAMLTest user's values:
 
 ```
   --authorize-attribute UserID \
   --authorize-values user1,user2
 ```
 
-Now you can open your browser and navigate to `http://${BASE_FQDN}:8080`. You will be redirected
-via SSOCircle's login page and then be returned with access to Grafana.
+Now you can open your browser and navigate to `http://${BASE_FQDN}:8080`. You will be redirected via SAMLTest's login page and then be returned with access to Grafana.
 
 ## Troubleshooting
 
