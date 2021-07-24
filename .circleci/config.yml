@@ -2,14 +2,14 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:1.16
     steps:
       - checkout
       - run: go build
 
   release:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:1.16
     steps:
       - checkout
       - setup_remote_docker
