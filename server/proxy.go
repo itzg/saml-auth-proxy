@@ -106,7 +106,7 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	cookies := reqIn.Cookies()
 	for _, cookie := range cookies {
 		if cookie.Name != tokenCookieName {
-			reqOut.Header.Add("Cookie", cookie.String())
+			reqOut.AddCookie(cookie);
 		}
 	}
 
