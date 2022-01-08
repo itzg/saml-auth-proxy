@@ -12,7 +12,7 @@ services:
     volumes:
       - grafana:/var/lib/grafana
   web-debug-server:
-    image: itzg/web-debug-server:0.0.5
+    image: itzg/web-debug-server:1.2.2
     ports:
       - 8081:8080
 

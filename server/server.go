@@ -108,17 +108,11 @@ func Start(ctx context.Context, cfg *Config) error {
 	if cookieDomain == "" {
 		cookieDomain = rootUrl.Hostname()
 	}
-
-	// This is redundant with Session created in samlsp.New, but prepares for deprecation switch
-	// Library is still using same Options struct for all of these
-	// ...so the fields are flagged as deprecated but library
-	middleware.Session = samlsp.DefaultSessionProvider(samlsp.Options{
-		URL:          *rootUrl,
-		Key:          keyPair.PrivateKey.(*rsa.PrivateKey),
-		CookieMaxAge: cfg.CookieMaxAge,
-		CookieDomain: cookieDomain,
-		CookieName:   tokenCookieName,
-	})
+	cookieSessionProvider := samlsp.DefaultSessionProvider(samlOpts)
+	cookieSessionProvider.Name = tokenCookieName
+	cookieSessionProvider.Domain = cookieDomain
+	cookieSessionProvider.MaxAge = cfg.CookieMaxAge
+	middleware.Session = cookieSessionProvider
 
 	proxy, err := NewProxy(cfg)
 	if err != nil {
