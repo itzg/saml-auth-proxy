@@ -1,7 +1,6 @@
 project_name: saml-auth-proxy
-before:
-  hooks:
-    - go mod download
+gomod:
+  proxy: true
 builds:
 - env:
   - CGO_ENABLED=0
