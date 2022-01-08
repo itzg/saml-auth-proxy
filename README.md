@@ -1,4 +1,4 @@
-[![Test](https://github.com/itzg/saml-auth-proxy/actions/workflows/test.yml/badge.svg)](https://github.com/itzg/saml-auth-proxy/actions/workflows/test.yml)
+[![Test](https://github.com/itzg/saml-auth-proxy/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/itzg/saml-auth-proxy/actions/workflows/test.yml)
 [![](https://img.shields.io/github/release/itzg/saml-auth-proxy.svg?style=flat)](https://github.com/itzg/saml-auth-proxy/releases/latest)
 [![](https://img.shields.io/docker/pulls/itzg/saml-auth-proxy.svg?style=flat)](https://hub.docker.com/r/itzg/saml-auth-proxy)
 
