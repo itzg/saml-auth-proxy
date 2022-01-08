@@ -123,6 +123,11 @@ Generate your SP's SAML metadata by accessing the built-in metadata endpoint:
 curl localhost:8080/saml/metadata > saml-sp-metadata.xml
 ```
 
+or with PowerShell
+```ps
+Invoke-RestMethod -Uri http://localhost:8080/saml/metadata -OutFile .\saml-sp-metadata.xml
+```
+
 You can upload the  file `saml-sp-metadata.xml` file at 
 [samltest.id](https://samltest.id/upload.php).
 
