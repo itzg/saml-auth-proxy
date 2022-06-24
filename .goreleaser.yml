@@ -24,6 +24,7 @@ dockers:
       - "itzg/{{.ProjectName}}:latest"
       - "itzg/{{.ProjectName}}:{{ .Tag }}"
     dockerfile: Dockerfile.release
+    use: buildx
 checksum:
   name_template: 'checksums.txt'
 snapshot:
