@@ -38,9 +38,3 @@ changelog:
     - '^test:'
 release:
   prerelease: auto
-scoop:
-  bucket:
-    owner: itzg
-    name: scoop-bucket
-  license: Apache2
-  description: Provides a SAML SP authentication proxy for backend web services
