@@ -11,8 +11,8 @@ Provides a SAML SP authentication proxy for backend web services
         If set, allows for IdP initiated authentication flow (env SAML_PROXY_ALLOW_IDP_INITIATED)
   -attribute-header-mappings attribute=header
         Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header (env SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS)
-  -attribute-header-wildcard
-        Maps all SAML attributes with this option as a prefix (env SAML_PROXY_ATTRIBUTE_HEADER_WILDCARD)
+  -attribute-header-wildcard string
+         (env SAML_PROXY_ATTRIBUTE_HEADER_WILDCARD)
   -authorize-attribute attribute
         Enables authorization and specifies the attribute to check for authorized values (env SAML_PROXY_AUTHORIZE_ATTRIBUTE)
   -authorize-values values
@@ -23,12 +23,18 @@ Provides a SAML SP authentication proxy for backend web services
         External URL of this proxy (env SAML_PROXY_BASE_URL)
   -bind host:port
         host:port to bind for serving HTTP (env SAML_PROXY_BIND) (default ":8080")
-  -cookie-max-age duration
-        Specifies the amount of time the authentication token will remain valid (env SAML_PROXY_COOKIE_MAX_AGE) (default 2h0m0s)
   -cookie-domain string
         Overrides the domain set on the session cookie. By default the BaseUrl host is used. (env SAML_PROXY_COOKIE_DOMAIN)
+  -cookie-max-age duration
+        Specifies the amount of time the authentication token will remain valid (env SAML_PROXY_COOKIE_MAX_AGE) (default 2h0m0s) 
+  -cookie-name string
+        Name of the cookie that tracks session token (env SAML_PROXY_COOKIE_NAME) (default "token")
   -idp-ca-path path
         Optional path to a CA certificate PEM file for the IdP (env SAML_PROXY_IDP_CA_PATH)
+  -idp-metadata-url URL
+        URL of the IdP's metadata XML, can be a local file by specifying the file:// scheme (env SAML_PROXY_IDP_METADATA_URL)
+  -name-id-format string
+        One of unspecified, transient, email, or persistent to use a standard format or give a full URN of the name ID format (env SAML_PROXY_NAME_ID_FORMAT) (default "transient")
   -idp-metadata-url URL
         URL of the IdP's metadata XML, can be a local file by specifying the file:// scheme (env SAML_PROXY_IDP_METADATA_URL)
   -name-id-format string

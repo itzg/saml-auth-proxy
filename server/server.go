@@ -19,8 +19,6 @@ import (
 
 const fetchMetadataTimeout = 30 * time.Second
 
-const tokenCookieName = "token"
-
 type Config struct {
 	Version                 bool              `usage:"show version and exit" env:""`
 	Bind                    string            `default:":8080" usage:"[host:port] to bind for serving HTTP"`
@@ -37,6 +35,7 @@ type Config struct {
 	NewAuthWebhookUrl       string            `usage:"[URL] of webhook that will get POST'ed when a new authentication is processed"`
 	AuthorizeAttribute      string            `usage:"Enables authorization and specifies the [attribute] to check for authorized values"`
 	AuthorizeValues         []string          `usage:"If enabled, comma separated list of [values] that must be present in the authorize attribute"`
+	CookieName              string            `usage:"Name of the cookie that tracks session token" default:"token"`
 	CookieMaxAge            time.Duration     `usage:"Specifies the amount of time the authentication token will remain valid" default:"2h"`
 	CookieDomain            string            `usage:"Overrides the domain set on the session cookie. By default the BaseUrl host is used."`
 	AllowIdpInitiated       bool              `usage:"If set, allows for IdP initiated authentication flow"`
@@ -109,7 +108,7 @@ func Start(ctx context.Context, cfg *Config) error {
 		cookieDomain = rootUrl.Hostname()
 	}
 	cookieSessionProvider := samlsp.DefaultSessionProvider(samlOpts)
-	cookieSessionProvider.Name = tokenCookieName
+	cookieSessionProvider.Name = cfg.CookieName
 	cookieSessionProvider.Domain = cookieDomain
 	cookieSessionProvider.MaxAge = cfg.CookieMaxAge
 	middleware.Session = cookieSessionProvider
