@@ -4,7 +4,7 @@ services:
   grafana:
     image: grafana/grafana
     ports:
-      - 3000:3000
+      - "3000:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: notsecret
       GF_AUTH_PROXY_ENABLED: "true"
@@ -12,9 +12,9 @@ services:
     volumes:
       - grafana:/var/lib/grafana
   web-debug-server:
-    image: itzg/web-debug-server:1.2.2
+    image: itzg/web-debug-server:1.2.3
     ports:
-      - 8081:8080
+      - "8081:8080"
 
 volumes:
   grafana: {}
