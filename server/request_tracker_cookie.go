@@ -18,8 +18,10 @@ type CookieRequestTracker struct {
 
 // Source: https://github.com/crewjam/saml/blob/5e0ffd290abf0be7dfd4f8279e03a963071544eb/samlsp/request_tracker_cookie.go#L28-58
 // Changes:
+// - Adds host in request URI
 // - Adds CookieDomain config in http.SetCookie
 func (t CookieRequestTracker) TrackRequest(w http.ResponseWriter, r *http.Request, samlRequestID string) (string, error) {
+	r.URL.Host = r.Host
 	trackedRequest := samlsp.TrackedRequest{
 		Index:         base64.RawURLEncoding.EncodeToString(randomBytes(42)),
 		SAMLRequestID: samlRequestID,
