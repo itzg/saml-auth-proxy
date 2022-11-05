@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/itzg/go-flagsfiller"
 	"github.com/itzg/saml-auth-proxy/server"
+	"github.com/itzg/zapconfigs"
+	"go.uber.org/zap"
 	"log"
 	"os"
 )
@@ -31,13 +33,22 @@ func main() {
 		os.Exit(0)
 	}
 
+	var logger *zap.Logger
+	if serverConfig.Debug {
+		logger = zapconfigs.NewDebugLogger()
+	} else {
+		logger = zapconfigs.NewDefaultLogger()
+	}
+	defer logger.Sync()
+
 	checkRequired(serverConfig.BaseUrl, "base-url")
 	checkRequired(serverConfig.BackendUrl, "backend-url")
 	checkRequired(serverConfig.IdpMetadataUrl, "idp-metadata-url")
 
 	ctx := context.Background()
+
 	// server only returns when there's an error
-	log.Fatal(server.Start(ctx, &serverConfig))
+	log.Fatal(server.Start(ctx, logger, &serverConfig))
 }
 
 func checkRequired(value string, name string) {

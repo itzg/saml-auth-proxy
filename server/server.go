@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/xml"
 	"fmt"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -19,29 +20,7 @@ import (
 
 const fetchMetadataTimeout = 30 * time.Second
 
-type Config struct {
-	Version                 bool              `usage:"show version and exit" env:""`
-	Bind                    string            `default:":8080" usage:"[host:port] to bind for serving HTTP"`
-	BaseUrl                 string            `usage:"External [URL] of this proxy"`
-	BackendUrl              string            `usage:"[URL] of the backend being proxied"`
-	IdpMetadataUrl          string            `usage:"[URL] of the IdP's metadata XML, can be a local file by specifying the file:// scheme"`
-	IdpCaPath               string            `usage:"Optional [path] to a CA certificate PEM file for the IdP"`
-	NameIdFormat            string            `usage:"One of unspecified, transient, email, or persistent to use a standard format or give a full URN of the name ID format" default:"transient"`
-	SpKeyPath               string            `default:"saml-auth-proxy.key" usage:"The [path] to the X509 private key PEM file for this SP"`
-	SpCertPath              string            `default:"saml-auth-proxy.cert" usage:"The [path] to the X509 public certificate PEM file for this SP"`
-	NameIdMapping           string            `usage:"Name of the request [header] to convey the SAML nameID/subject"`
-	AttributeHeaderMappings map[string]string `usage:"Comma separated list of [attribute=header] pairs mapping SAML IdP response attributes to forwarded request header"`
-	AttributeHeaderWildcard string            `usage:"Maps all SAML attributes with this option as a prefix`
-	NewAuthWebhookUrl       string            `usage:"[URL] of webhook that will get POST'ed when a new authentication is processed"`
-	AuthorizeAttribute      string            `usage:"Enables authorization and specifies the [attribute] to check for authorized values"`
-	AuthorizeValues         []string          `usage:"If enabled, comma separated list of [values] that must be present in the authorize attribute"`
-	CookieName              string            `usage:"Name of the cookie that tracks session token" default:"token"`
-	CookieMaxAge            time.Duration     `usage:"Specifies the amount of time the authentication token will remain valid" default:"2h"`
-	CookieDomain            string            `usage:"Overrides the domain set on the session cookie. By default the BaseUrl host is used."`
-	AllowIdpInitiated       bool              `usage:"If set, allows for IdP initiated authentication flow"`
-}
-
-func Start(ctx context.Context, cfg *Config) error {
+func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
 	keyPair, err := tls.LoadX509KeyPair(cfg.SpCertPath, cfg.SpKeyPath)
 	if err != nil {
 		return fmt.Errorf("failed to load SP key and certificate: %w", err)
@@ -114,7 +93,7 @@ func Start(ctx context.Context, cfg *Config) error {
 	cookieSessionProvider.MaxAge = cfg.CookieMaxAge
 	middleware.Session = cookieSessionProvider
 
-	proxy, err := NewProxy(cfg)
+	proxy, err := NewProxy(logger, cfg)
 	if err != nil {
 		return fmt.Errorf("failed to create proxy: %w", err)
 	}
@@ -124,8 +103,11 @@ func Start(ctx context.Context, cfg *Config) error {
 	http.Handle("/_health", http.HandlerFunc(proxy.health))
 	http.Handle("/", middleware.RequireAccount(app))
 
-	log.Printf("Serving requests for %s -> %s at %s",
-		cfg.BaseUrl, cfg.BackendUrl, cfg.Bind)
+	logger.
+		With(zap.String("baseUrl", cfg.BaseUrl)).
+		With(zap.String("backendUrl", cfg.BackendUrl)).
+		With(zap.String("binding", cfg.Bind)).
+		Info("Serving requests")
 	return http.ListenAndServe(cfg.Bind, nil)
 }
 
