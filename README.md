@@ -13,6 +13,8 @@ Provides a SAML SP authentication proxy for backend web services
         Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header (env SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS)
   -attribute-header-wildcard string
          (env SAML_PROXY_ATTRIBUTE_HEADER_WILDCARD)
+  -auth-verify-path string
+        Path under BaseUrl that will respond with a 200 when authenticated (env SAML_PROXY_AUTH_VERIFY_PATH) (default "/_verify")
   -authorize-attribute attribute
         Enables authorization and specifies the attribute to check for authorized values (env SAML_PROXY_AUTHORIZE_ATTRIBUTE)
   -authorize-values values
@@ -110,6 +112,8 @@ operations;
 Generate the SP certificate and key material by running:
 
 ```bash
+# IMPORTANT: set this
+BASE_FQDN=...
 openssl req -x509 -newkey rsa:2048 -keyout saml-auth-proxy.key -out saml-auth-proxy.cert -days 365 -nodes -subj "/CN=${BASE_FQDN}"
 ```
 
@@ -151,6 +155,8 @@ To try out authorization you would add the following arguments referencing somet
 ```
 
 Now you can open your browser and navigate to `http://${BASE_FQDN}:8080`. You will be redirected via SAMLTest's login page and then be returned with access to Grafana.
+
+Force a logout from the IdP by going to <https://samltest.id/idp/profile/Logout>
 
 ## Troubleshooting
 

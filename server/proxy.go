@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -33,9 +33,10 @@ type proxy struct {
 	backendUrl    *url.URL
 	client        *http.Client
 	newTokenCache *cache.Cache
+	logger        *zap.Logger
 }
 
-func NewProxy(cfg *Config) (*proxy, error) {
+func NewProxy(logger *zap.Logger, cfg *Config) (*proxy, error) {
 	backendUrl, err := url.Parse(cfg.BackendUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse backend URL: %w", err)
@@ -53,6 +54,7 @@ func NewProxy(cfg *Config) (*proxy, error) {
 		client:        client,
 		backendUrl:    backendUrl,
 		newTokenCache: cache.New(newTokenCacheExpiration, newTokenCacheCleanupInterval),
+		logger:        logger,
 	}
 
 	return proxy, nil
@@ -63,7 +65,9 @@ func (p *proxy) health(respOutWriter http.ResponseWriter, _ *http.Request) {
 	respOutWriter.WriteHeader(200)
 	_, err := respOutWriter.Write([]byte("OK"))
 	if err != nil {
-		log.Printf("ERR failed to write health response body: %s", err.Error())
+		p.logger.
+			With(zap.Error(err)).
+			Error("failed to write health response body")
 	}
 }
 
@@ -72,20 +76,33 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	session := samlsp.SessionFromContext(reqIn.Context())
 	sessionClaims, ok := session.(samlsp.JWTSessionClaims)
 	if !ok {
-		log.Printf("ERR session is not expected type")
+		p.logger.Error("session is not expected type")
 		respOutWriter.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	authUsing, authorized := p.authorized(&sessionClaims)
 	if !authorized {
+		p.logger.Debug("Responding Unauthorized")
 		respOutWriter.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if reqIn.URL.Path == p.config.AuthVerifyPath {
+		p.logger.
+			With(zap.String("remoteAddr", reqIn.RemoteAddr)).
+			Debug("Responding with 204 to auth verify request")
+		p.addHeaders(sessionClaims, respOutWriter.Header())
+		respOutWriter.WriteHeader(204)
 		return
 	}
 
 	resolved, err := p.backendUrl.Parse(reqIn.URL.Path)
 	if err != nil {
-		log.Printf("ERR failed to resolve backend URL from %s: %s", reqIn.URL.Path, err.Error())
+		p.logger.
+			With(zap.String("urlPath", reqIn.URL.Path)).
+			With(zap.Error(err)).
+			Error("failed to resolve backend URL")
 
 		respOutWriter.WriteHeader(500)
 		_, _ = respOutWriter.Write([]byte(fmt.Sprintf("Failed to resolve backend URL: %s", err.Error())))
@@ -95,7 +112,11 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 
 	reqOut, err := http.NewRequest(reqIn.Method, resolved.String(), reqIn.Body)
 	if err != nil {
-		log.Printf("ERR unable to create new request for %s %s: %s", reqIn.Method, reqIn.URL, err)
+		p.logger.
+			With(zap.String("method", reqIn.Method)).
+			With(zap.Any("url", reqIn.URL)).
+			With(zap.Error(err)).
+			Error("unable to create new request")
 		respOutWriter.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -112,23 +133,7 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 
 	p.checkForNewAuth(&sessionClaims)
 
-	if p.config.AttributeHeaderMappings != nil {
-		for attr, hdr := range p.config.AttributeHeaderMappings {
-			if values, ok := sessionClaims.GetAttributes()[attr]; ok {
-				for _, value := range values {
-					reqOut.Header.Add(hdr, value)
-				}
-			}
-		}
-	}
-
-	if p.config.AttributeHeaderWildcard != "" {
-		for attr, values := range sessionClaims.GetAttributes() {
-			for _, value := range values {
-				reqOut.Header.Add(p.config.AttributeHeaderWildcard+attr, value)
-			}
-		}
-	}
+	p.addHeaders(sessionClaims, reqOut.Header)
 
 	if p.config.NameIdMapping != "" {
 		reqOut.Header.Set(p.config.NameIdMapping,
@@ -140,7 +145,10 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	if err == nil {
 		reqOut.Header.Add(HeaderForwardedFor, remoteHost)
 	} else {
-		log.Printf("ERR unable to parse host and port from %s: %s", reqIn.RemoteAddr, err.Error())
+		p.logger.
+			With(zap.Error(err)).
+			With(zap.String("remoteAddr", reqIn.RemoteAddr)).
+			Error("unable to parse host and port")
 	}
 	protoParts := strings.Split(reqIn.Proto, "/")
 	reqOut.Header.Set(HeaderForwardedProto, strings.ToLower(protoParts[0]))
@@ -159,7 +167,29 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	respOutWriter.WriteHeader(respIn.StatusCode)
 	_, err = io.Copy(respOutWriter, respIn.Body)
 	if err != nil {
-		log.Printf("ERR failed to transfer backend response body: %s", err.Error())
+		p.logger.
+			With(zap.Error(err)).
+			Error("failed to transfer backend response body")
+	}
+}
+
+func (p *proxy) addHeaders(sessionClaims samlsp.JWTSessionClaims, headers http.Header) {
+	if p.config.AttributeHeaderMappings != nil {
+		for attr, hdr := range p.config.AttributeHeaderMappings {
+			if values, ok := sessionClaims.GetAttributes()[attr]; ok {
+				for _, value := range values {
+					headers.Add(hdr, value)
+				}
+			}
+		}
+	}
+
+	if p.config.AttributeHeaderWildcard != "" {
+		for attr, values := range sessionClaims.GetAttributes() {
+			for _, value := range values {
+				headers.Add(p.config.AttributeHeaderWildcard+attr, value)
+			}
+		}
 	}
 }
 
@@ -167,7 +197,9 @@ func (p *proxy) checkForNewAuth(sessionClaims *samlsp.JWTSessionClaims) {
 	if p.config.NewAuthWebhookUrl != "" && sessionClaims.IssuedAt >= time.Now().Unix()-1 {
 		err := p.newTokenCache.Add(sessionClaims.Id, sessionClaims, cache.DefaultExpiration)
 		if err == nil {
-			log.Printf("Issued new authentication token: %+v", sessionClaims)
+			p.logger.
+				With(zap.Any("sessionClaims", sessionClaims)).
+				Info("Issued new authentication token")
 
 			var postBody bytes.Buffer
 			encoder := json.NewEncoder(&postBody)
@@ -175,22 +207,27 @@ func (p *proxy) checkForNewAuth(sessionClaims *samlsp.JWTSessionClaims) {
 			if err == nil {
 				_, err := http.Post(p.config.NewAuthWebhookUrl, "application/json", &postBody)
 				if err != nil {
-					log.Printf("ERR unable to post new auth webhook: %s", err.Error())
+					p.logger.
+						With(zap.Error(err)).
+						Error("unable to post new auth webhook")
 				}
 			} else {
-				log.Printf("ERR unable to encode auth token attributes: %s", err.Error())
+				p.logger.
+					With(zap.Error(err)).
+					Error("unable to encode auth token attributes")
 			}
 		}
 	}
 }
 
-// authorized returns an boolean indication if the request is authorized.
+// authorized returns a boolean indication if the request is authorized.
 // The initial string return value is an attribute=value pair that was used to authorize the request.
 // If authorization was not configured the returned string is empty.
 func (p *proxy) authorized(sessionClaims *samlsp.JWTSessionClaims) (string, bool) {
 	if p.config.AuthorizeAttribute != "" {
 		values, exists := sessionClaims.GetAttributes()[p.config.AuthorizeAttribute]
 		if !exists {
+			p.logger.Debug("AuthorizeAttribute not present in session claims")
 			return "", false
 		}
 
@@ -202,6 +239,9 @@ func (p *proxy) authorized(sessionClaims *samlsp.JWTSessionClaims) (string, bool
 			}
 		}
 
+		p.logger.
+			With(zap.Strings("values", values)).
+			Debug("AuthorizeAttribute did not match required value")
 		return "", false
 	} else {
 		return "", true
