@@ -122,7 +122,7 @@ Start saml-auth-proxy using:
 ```bash
 ./saml-auth-proxy \
   --base-url http://${BASE_FQDN}:8080 \
-  --backend-url http://locahost:3000 \
+  --backend-url http://localhost:3000 \
   --idp-metadata-url=https://samltest.id/saml/idp \
   --attribute-header-mappings UserID=x-webauth-user
 ```
