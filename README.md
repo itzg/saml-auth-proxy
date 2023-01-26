@@ -49,6 +49,9 @@ Provides a SAML SP authentication proxy for backend web services
         The path to the X509 public certificate PEM file for this SP (env SAML_PROXY_SP_CERT_PATH) (default "saml-auth-proxy.cert")
   -sp-key-path path
         The path to the X509 private key PEM file for this SP (env SAML_PROXY_SP_KEY_PATH) (default "saml-auth-proxy.key")
+  -static-relay-state string
+        A fixed RelayState value, such as a short URL. Will be trimmed to 80 characters to conform with SAML. The default generates random bytes that are Base64
+ encoded. (env SAML_PROXY_STATIC_RELAY_STATE)
   -version
         show version and exit
 ```

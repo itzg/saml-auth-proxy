@@ -13,7 +13,16 @@ import (
 type CookieRequestTracker struct {
 	samlsp.CookieRequestTracker
 
-	CookieDomain string
+	CookieDomain     string
+	StaticRelayState string
+}
+
+func minOfInts(x, y int) int {
+	if x < y {
+		return x
+	} else {
+		return y
+	}
 }
 
 // Source: https://github.com/crewjam/saml/blob/5e0ffd290abf0be7dfd4f8279e03a963071544eb/samlsp/request_tracker_cookie.go#L28-58
@@ -28,7 +37,9 @@ func (t CookieRequestTracker) TrackRequest(w http.ResponseWriter, r *http.Reques
 		URI:           r.URL.String(),
 	}
 
-	if t.RelayStateFunc != nil {
+	if t.StaticRelayState != "" {
+		trackedRequest.Index = t.StaticRelayState[0:minOfInts(80, len(t.StaticRelayState))]
+	} else if t.RelayStateFunc != nil {
 		relayState := t.RelayStateFunc(w, r)
 		if relayState != "" {
 			trackedRequest.Index = relayState
