@@ -1,6 +1,6 @@
-/*metadata.xml
-/*.cert
-/*.key
+**/*metadata.xml
+**/*.cert
+**/*.key
 
 /dist/
 /saml-auth-proxy
