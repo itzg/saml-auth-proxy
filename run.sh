@@ -19,9 +19,10 @@ docker-compose up --build -d
 curl http://${BASE_FQDN}/saml/metadata > data/metadata.xml
 
 # upload to samlsp.id
-echo "Please upload the metadata in data/metadata.xml to https://samltest.id/upload.php"
+echo "Please upload the metadata in data/metadata.xml to https://samltest.id/upload.php, then hit enter"
 read useraddedmetadata
-echo "You can now visit the site at: http://$BASE_FQDN"
+echo "You can now visit the site at: http://$BASE_FQDN after hit enter"
+read useraddedmetadata
 
 docker-compose logs -f
 
