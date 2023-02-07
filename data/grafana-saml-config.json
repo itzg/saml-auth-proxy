@@ -1,6 +1,5 @@
 {
   "samlGroupAttributeName": "mail",
-  "samlLoginIdAttributeName": "mail",
   "organizations": {
     "1": {
       "groupToRole": {

@@ -7,3 +7,5 @@
 /saml-auth-proxy.exe
 /*.iml
 /.idea
+
+grafana_lib_data/

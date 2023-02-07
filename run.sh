@@ -12,6 +12,8 @@ else
   echo "key and cert already exist, skipping creation"
 fi
 
+docker-compose rm -s -f
+
 # start containers
 docker-compose up --build -d
 
