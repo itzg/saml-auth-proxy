@@ -20,5 +20,6 @@ type GrafanaOrganizationConfig struct {
 
 type GrafanaSamlConfig struct {
 	SamlGroupAttributeName string                            `json:"samlGroupAttributeName"`
+	AttributeHeaderMapping map[string]string                 `json:"attributeHeaderMapping"`
 	Organizations          map[int]GrafanaOrganizationConfig `json:"organizations"`
 }

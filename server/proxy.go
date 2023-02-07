@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -37,6 +38,26 @@ type proxy struct {
 	client        *http.Client
 	newTokenCache *cache.Cache
 	logger        *zap.Logger
+}
+
+func SetupGrafana(sessionClaims *samlsp.JWTSessionClaims) error {
+	grafanaConfig, err := LoadGrafanaConfig()
+	if err != nil {
+		fmt.Println("Error in reading org-permission config-file: " + err.Error())
+		return err
+	}
+
+	attribute_name := grafanaConfig.SamlGroupAttributeName
+
+	values, exists := sessionClaims.GetAttributes()[attribute_name]
+	if !exists {
+		return errors.New("AuthorizeAttribute not present in session claims")
+	}
+
+	user_id := values[0]
+	CheckUserPermissions(user_id, attribute_name, values)
+
+	return nil
 }
 
 func NewProxy(logger *zap.Logger, cfg *Config) (*proxy, error) {
@@ -84,6 +105,18 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 		return
 	}
 
+	err := SetupGrafana(&sessionClaims)
+	if err != nil {
+		p.logger.Debug("Failed to communicate with grafana: " + err.Error())
+		return
+	}
+
+	grafanaAttributeHeaderMapping, attributeHeaderMappingErr := GetHeaderMapping()
+	if attributeHeaderMappingErr != nil {
+		p.logger.Error(attributeHeaderMappingErr.Error())
+		return
+	}
+
 	authUsing, authorized := p.authorized(&sessionClaims)
 	if !authorized {
 		p.logger.Debug("Responding Unauthorized")
@@ -96,6 +129,7 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 			With(zap.String("remoteAddr", reqIn.RemoteAddr)).
 			Debug("Responding with 204 to auth verify request")
 		p.addHeaders(sessionClaims, respOutWriter.Header())
+		p.addGrafanaHeaders(sessionClaims, respOutWriter.Header(), grafanaAttributeHeaderMapping)
 		respOutWriter.WriteHeader(204)
 		return
 	}
@@ -137,6 +171,7 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	p.checkForNewAuth(&sessionClaims)
 
 	p.addHeaders(sessionClaims, reqOut.Header)
+	p.addGrafanaHeaders(sessionClaims, reqOut.Header, grafanaAttributeHeaderMapping)
 
 	if p.config.NameIdMapping != "" {
 		reqOut.Header.Set(p.config.NameIdMapping,
@@ -173,6 +208,16 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 		p.logger.
 			With(zap.Error(err)).
 			Error("failed to transfer backend response body")
+	}
+}
+
+func (p *proxy) addGrafanaHeaders(sessionClaims samlsp.JWTSessionClaims, headers http.Header, grafanaAttributeHeaderMapping map[string]string) {
+	for attr, hdr := range grafanaAttributeHeaderMapping {
+		if values, ok := sessionClaims.GetAttributes()[attr]; ok {
+			for _, value := range values {
+				headers.Add(hdr, value)
+			}
+		}
 	}
 }
 

@@ -24,9 +24,9 @@ services:
       SAML_PROXY_BASE_URL: http://localhost:8080
       SAML_PROXY_BACKEND_URL: http://grafana:3000
       SAML_PROXY_IDP_METADATA_URL: https://samltest.id/saml/idp
-      SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS: mail=x-webauth-email
-      SAML_PROXY_AUTHORIZE_ATTRIBUTE: mail
-      SAML_PROXY_AUTHORIZE_VALUES: rsanchez@samltest.id,msmith@samltest.id
+      # SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS: mail=x-webauth-email
+      # SAML_PROXY_AUTHORIZE_ATTRIBUTE: mail
+      # SAML_PROXY_AUTHORIZE_VALUES: rsanchez@samltest.id,msmith@samltest.id
       SAML_PROXY_SP_CERT_PATH: /app/certs/saml-auth-proxy.cert
       SAML_PROXY_SP_KEY_PATH: /app/certs/saml-auth-proxy.key
       GRAFANA_SAML_CONFIG_LOCATION: /app/data/grafana-saml-config.json

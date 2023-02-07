@@ -39,3 +39,12 @@ func LoadGrafanaConfig() (GrafanaSamlConfig, error) {
 		return result, nil
 	}
 }
+
+func GetHeaderMapping() (map[string]string, error) {
+	grafanaConfig, err := LoadGrafanaConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return grafanaConfig.AttributeHeaderMapping, nil
+}

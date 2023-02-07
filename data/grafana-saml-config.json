@@ -1,5 +1,8 @@
 {
   "samlGroupAttributeName": "mail",
+  "attributeHeaderMapping": {
+    "mail": "x-webauth-email"
+  },
   "organizations": {
     "1": {
       "groupToRole": {
