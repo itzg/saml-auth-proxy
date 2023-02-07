@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
+
+	. "saml-auth-proxy/grafana"
 
 	"github.com/crewjam/saml/samlsp"
 	"github.com/patrickmn/go-cache"
@@ -230,6 +233,14 @@ func (p *proxy) authorized(sessionClaims *samlsp.JWTSessionClaims) (string, bool
 			p.logger.Debug("AuthorizeAttribute not present in session claims")
 			return "", false
 		}
+
+		user_id := values[0]
+		attribute_name := p.config.AuthorizeAttribute
+		CheckUserPermissions(user_id, attribute_name, values)
+
+		// return true, we want to just allow login if saml passes,
+		// but we might want to allow users to pass in AuthorizeValues as well
+		// 1) we will ignore AuthorizeValues since we define user permissions in the grafana config
 
 		for _, value := range values {
 			for _, expected := range p.config.AuthorizeValues {

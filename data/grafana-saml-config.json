@@ -1,0 +1,20 @@
+{
+  "samlGroupAttributeName": "mail",
+  "samlLoginIdAttributeName": "mail",
+  "organizations": {
+    "1": {
+      "groupToRole": {
+        "viewerGroup": "viewer",
+        "editorGroup": "editor",
+        "rsanchez@samltest.id": "admin"
+      }
+    },
+    "2": {
+      "groupToRole": {
+        "viewerGroup": "viewer",
+        "editorGroup": "editor",
+        "rsanchez@samltest.id": "editor"
+      }
+    }
+  }
+}

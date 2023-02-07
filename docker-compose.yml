@@ -9,8 +9,10 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: notsecret
       GF_AUTH_PROXY_ENABLED: "true"
       GF_AUTH_PROXY_HEADER_NAME: X-WEBAUTH-EMAIL
+      GF_AUTH_PROXY_AUTO_SIGN_UP: "false"
     volumes:
-      - grafana:/var/lib/grafana
+      - ./grafana_lib_data:/var/lib/grafana
+      - ./grafana_data:/etc/grafana/data
   web-debug-server:
     image: itzg/web-debug-server:1.2.3
     ports:
@@ -27,11 +29,13 @@ services:
       SAML_PROXY_AUTHORIZE_VALUES: rsanchez@samltest.id,msmith@samltest.id
       SAML_PROXY_SP_CERT_PATH: /app/certs/saml-auth-proxy.cert
       SAML_PROXY_SP_KEY_PATH: /app/certs/saml-auth-proxy.key
+      GRAFANA_SAML_CONFIG_LOCATION: /app/data/grafana-saml-config.json
+      GRAFANA_URL: http://grafana:3000
+      GRAFANA_ADMIN_USER: admin
+      GRAFANA_ADMIN_PASSWORD: notsecret
     ports:
       - "8080:8080"
     volumes:
       - ./certs:/app/certs
+      - ./data:/app/data
     
-
-volumes:
-  grafana: {}

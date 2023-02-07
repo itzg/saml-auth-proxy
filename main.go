@@ -4,12 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/itzg/go-flagsfiller"
-	"github.com/itzg/saml-auth-proxy/server"
-	"github.com/itzg/zapconfigs"
-	"go.uber.org/zap"
 	"log"
 	"os"
+	"saml-auth-proxy/server"
+
+	"github.com/itzg/go-flagsfiller"
+	"github.com/itzg/zapconfigs"
+	"go.uber.org/zap"
 )
 
 var (
