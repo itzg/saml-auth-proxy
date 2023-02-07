@@ -90,20 +90,6 @@ func getUsersHighestPrivilege(orgId int, userGroups []string, grafanaSamlConfig 
 	return GrafanaIdToPermission[highestPrivilege], nil
 }
 
-func updateUser(loginId string, groups []string, grafanaSamlConfig GrafanaSamlConfig) error {
-
-	if loginId == "" {
-		return nil
-	}
-
-	err := updateUserPermission(loginId, groups, grafanaSamlConfig)
-	if err == nil {
-		fmt.Println("Updated user permissions")
-	}
-
-	return err
-}
-
 func (grafanaUser *GrafanaUser) updateUserPermission(grafanaConfig GrafanaSamlConfig) error {
 	grafanaClient, err := NewGrafanaClient()
 	if err != nil {
@@ -120,7 +106,9 @@ func (grafanaUser *GrafanaUser) updateUserPermission(grafanaConfig GrafanaSamlCo
 		return nil
 	}
 
-	if getUserError == nil && !userNeedsAccess {
+	// TODO: we need to not delete the user if they do not have any permissions
+	// but we want to disable them or make them a set role
+	if getUserError == nil && !userNeedsAccess && DEFAULT_DELETE_USERS_WITH_NO_PERMISSIONS {
 		deleteUserError := deleteGrafanaUser(grafanaClient, loginId)
 		return deleteUserError
 	}
@@ -136,59 +124,6 @@ func (grafanaUser *GrafanaUser) updateUserPermission(grafanaConfig GrafanaSamlCo
 
 	for orgId := range grafanaConfig.Organizations {
 		userRole, err := getUsersHighestPrivilege(orgId, groups, grafanaConfig)
-		if err != nil {
-			return err
-		}
-
-		if GrafanaPermissionToId[userRole] == 0 {
-			err = grafanaClient.RemoveOrgUser(int64(orgId), userId)
-			return err
-		}
-
-		err = grafanaClient.UpdateOrgUser(int64(orgId), userId, userRole)
-		if err == nil {
-			return nil
-		}
-
-		err = grafanaClient.AddOrgUser(int64(orgId), loginId, userRole)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func updateUserPermission(loginId string, groups []string, grafanaSamlConfig GrafanaSamlConfig) error {
-
-	grafanaClient, err := NewGrafanaClient()
-	if err != nil {
-		return err
-	}
-
-	userNeedsAccess := userShouldHaveAccess(grafanaClient, groups, grafanaSamlConfig)
-
-	userId, getUserError := getGrafanaUserId(grafanaClient, loginId)
-	if getUserError != nil && !userNeedsAccess {
-		return nil
-	}
-
-	if getUserError == nil && !userNeedsAccess {
-		deleteUserError := deleteGrafanaUser(grafanaClient, loginId)
-		return deleteUserError
-	}
-
-	if getUserError != nil && userNeedsAccess {
-		newUserId, createUserError := createGrafanaUser(grafanaClient, loginId)
-		if createUserError != nil {
-			return err
-		}
-
-		userId = newUserId
-	}
-
-	for orgId := range grafanaSamlConfig.Organizations {
-		userRole, err := getUsersHighestPrivilege(orgId, groups, grafanaSamlConfig)
 		if err != nil {
 			return err
 		}
