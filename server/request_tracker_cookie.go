@@ -15,8 +15,9 @@ import (
 type CookieRequestTracker struct {
 	samlsp.CookieRequestTracker
 
-	CookieDomain     string
-	StaticRelayState string
+	CookieDomain          string
+	StaticRelayState      string
+	TrustForwardedHeaders bool
 }
 
 func minOfInts(x, y int) int {
@@ -34,7 +35,7 @@ func minOfInts(x, y int) int {
 // - Handles X-Forwarded headers
 func (t CookieRequestTracker) TrackRequest(w http.ResponseWriter, r *http.Request, samlRequestID string) (string, error) {
 	var redirectURI *url.URL
-	if r.Header.Get(HeaderForwardedHost) != "" && r.Header.Get(HeaderForwardedURI) != "" && r.Header.Get(HeaderForwardedMethod) != "" {
+	if t.TrustForwardedHeaders && r.Header.Get(HeaderForwardedProto) != "" && r.Header.Get(HeaderForwardedHost) != "" && r.Header.Get(HeaderForwardedURI) != "" {
 		// When X-Forwarded headers exist, use it
 		redirectURI, _ = url.Parse(fmt.Sprintf("%s://%s%s", r.Header.Get(HeaderForwardedProto), r.Header.Get(HeaderForwardedHost), r.Header.Get(HeaderForwardedURI)))
 	} else {

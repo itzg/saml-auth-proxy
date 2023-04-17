@@ -91,7 +91,7 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 		return
 	}
 
-	if reqIn.URL.Path == p.config.AuthVerifyPath {
+	if p.config.AuthVerify && reqIn.URL.Path == p.config.AuthVerifyPath {
 		p.logger.
 			With(zap.String("remoteAddr", reqIn.RemoteAddr)).
 			Debug("Responding with 204 to auth verify request")

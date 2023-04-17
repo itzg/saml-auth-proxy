@@ -13,6 +13,8 @@ Provides a SAML SP authentication proxy for backend web services
         Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header (env SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS)
   -attribute-header-wildcard string
          (env SAML_PROXY_ATTRIBUTE_HEADER_WILDCARD)
+  -auth-verify bool
+        Enables verify path endpoint for forward auth and trusts X-Forwarded headers (env SAML_PROXY_AUTH_VERIFY)
   -auth-verify-path string
         Path under BaseUrl that will respond with a 200 when authenticated (env SAML_PROXY_AUTH_VERIFY_PATH) (default "/_verify")
   -authorize-attribute attribute
@@ -69,6 +71,10 @@ The authorization is configured with the combination of `--authorize-attribute` 
 **NOTE** the attribute is case sensitive, so be sure to specify that parameter exactly as it appears in the `Name` attribute of the `<saml:Attribute>` element.
 
 The values are a comma separated list of authorized values and since the assertion attributes can contain more than one value also, the authorization performs an "intersection" matching any one of the expected values with any one of the assertion attribute values. That allows for matching user IDs where the assertion has a single value but you want to allow one or more users to be authorized. It also allows for matching group names where each user may be belong to more than one group and you may want to also authorize any number of groups.
+
+The proxy also has [support for Traefik forward auth](https://doc.traefik.io/traefik/middlewares/http/forwardauth) and [the caddy variant](https://caddyserver.com/docs/caddyfile/directives/forward_auth). The `--auth-verify` and `--auth-verify-path` parameters can be used to enable a verify endpoint that will respond with a 204 when the user is authenticated.
+
+**WARNING** the `--auth-verify` option trusts the `X-Forwarded-*` headers and should only be used when the proxy is behind a gateway; one that clears and sets those headers.
 
 ## Note for AJAX/Fetch Operations
 
