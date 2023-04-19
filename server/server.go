@@ -85,8 +85,9 @@ func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
 			URL: *rootUrl,
 			Key: keyPair.PrivateKey.(*rsa.PrivateKey),
 		}, &middleware.ServiceProvider),
-		CookieDomain:     cookieDomain,
-		StaticRelayState: cfg.StaticRelayState,
+		CookieDomain:          cookieDomain,
+		StaticRelayState:      cfg.StaticRelayState,
+		TrustForwardedHeaders: cfg.AuthVerify,
 	}
 	cookieSessionProvider := samlsp.DefaultSessionProvider(samlOpts)
 	cookieSessionProvider.Name = cfg.CookieName

@@ -2,8 +2,10 @@ package server
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -13,8 +15,9 @@ import (
 type CookieRequestTracker struct {
 	samlsp.CookieRequestTracker
 
-	CookieDomain     string
-	StaticRelayState string
+	CookieDomain          string
+	StaticRelayState      string
+	TrustForwardedHeaders bool
 }
 
 func minOfInts(x, y int) int {
@@ -29,12 +32,21 @@ func minOfInts(x, y int) int {
 // Changes:
 // - Adds host in request URI
 // - Adds CookieDomain config in http.SetCookie
+// - Handles X-Forwarded headers
 func (t CookieRequestTracker) TrackRequest(w http.ResponseWriter, r *http.Request, samlRequestID string) (string, error) {
-	r.URL.Host = r.Host
+	var redirectURI *url.URL
+	if t.TrustForwardedHeaders && r.Header.Get(HeaderForwardedProto) != "" && r.Header.Get(HeaderForwardedHost) != "" && r.Header.Get(HeaderForwardedURI) != "" {
+		// When X-Forwarded headers exist, use it
+		redirectURI, _ = url.Parse(fmt.Sprintf("%s://%s%s", r.Header.Get(HeaderForwardedProto), r.Header.Get(HeaderForwardedHost), r.Header.Get(HeaderForwardedURI)))
+	} else {
+		redirectURI, _ = url.Parse(r.URL.String()) // Clone
+		redirectURI.Host = r.Host
+	}
+
 	trackedRequest := samlsp.TrackedRequest{
 		Index:         base64.RawURLEncoding.EncodeToString(randomBytes(42)),
 		SAMLRequestID: samlRequestID,
-		URI:           r.URL.String(),
+		URI:           redirectURI.String(),
 	}
 
 	if t.StaticRelayState != "" {

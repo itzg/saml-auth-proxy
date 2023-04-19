@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/crewjam/saml/samlsp"
 	"github.com/patrickmn/go-cache"
@@ -26,6 +27,8 @@ const (
 	HeaderForwardedProto  = "X-Forwarded-Proto"
 	HeaderForwardedFor    = "X-Forwarded-For"
 	HeaderForwardedHost   = "X-Forwarded-Host"
+	HeaderForwardedURI    = "X-Forwarded-Uri"
+	HeaderForwardedMethod = "X-Forwarded-Method"
 )
 
 type proxy struct {
@@ -88,7 +91,7 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 		return
 	}
 
-	if reqIn.URL.Path == p.config.AuthVerifyPath {
+	if p.config.AuthVerify && reqIn.URL.Path == p.config.AuthVerifyPath {
 		p.logger.
 			With(zap.String("remoteAddr", reqIn.RemoteAddr)).
 			Debug("Responding with 204 to auth verify request")
