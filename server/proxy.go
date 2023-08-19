@@ -76,15 +76,14 @@ func (p *proxy) health(respOutWriter http.ResponseWriter, _ *http.Request) {
 
 func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) {
 
-	session := samlsp.SessionFromContext(reqIn.Context())
-	sessionClaims, ok := session.(samlsp.JWTSessionClaims)
+	sessionClaims, ok := getSessionClaims(reqIn)
 	if !ok {
 		p.logger.Error("session is not expected type")
 		respOutWriter.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	authUsing, authorized := p.authorized(&sessionClaims)
+	authUsing, authorized := p.authorized(sessionClaims)
 	if !authorized {
 		p.logger.Debug("Responding Unauthorized")
 		respOutWriter.WriteHeader(http.StatusUnauthorized)
@@ -134,13 +133,15 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 		}
 	}
 
-	p.checkForNewAuth(&sessionClaims)
+	if sessionClaims != nil {
+		p.checkForNewAuth(sessionClaims)
 
-	p.addHeaders(sessionClaims, reqOut.Header)
+		p.addHeaders(sessionClaims, reqOut.Header)
 
-	if p.config.NameIdMapping != "" {
-		reqOut.Header.Set(p.config.NameIdMapping,
-			sessionClaims.Subject)
+		if p.config.NameIdMapping != "" {
+			reqOut.Header.Set(p.config.NameIdMapping,
+				sessionClaims.Subject)
+		}
 	}
 
 	reqOut.Header.Set(HeaderForwardedHost, reqIn.Host)
@@ -176,7 +177,21 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	}
 }
 
-func (p *proxy) addHeaders(sessionClaims samlsp.JWTSessionClaims, headers http.Header) {
+func getSessionClaims(reqIn *http.Request) (*samlsp.JWTSessionClaims, bool) {
+	session := samlsp.SessionFromContext(reqIn.Context())
+	if session == nil {
+		return nil, true
+	}
+
+	sessionClaims, ok := session.(samlsp.JWTSessionClaims)
+	return &sessionClaims, ok
+}
+
+func (p *proxy) addHeaders(sessionClaims *samlsp.JWTSessionClaims, headers http.Header) {
+	if sessionClaims == nil {
+		return
+	}
+
 	if p.config.AttributeHeaderMappings != nil {
 		for attr, hdr := range p.config.AttributeHeaderMappings {
 			if values, ok := sessionClaims.GetAttributes()[attr]; ok {
@@ -228,6 +243,10 @@ func (p *proxy) checkForNewAuth(sessionClaims *samlsp.JWTSessionClaims) {
 // If authorization was not configured the returned string is empty.
 func (p *proxy) authorized(sessionClaims *samlsp.JWTSessionClaims) (string, bool) {
 	if p.config.AuthorizeAttribute != "" {
+		if sessionClaims == nil {
+			return "", false
+		}
+
 		values, exists := sessionClaims.GetAttributes()[p.config.AuthorizeAttribute]
 		if !exists {
 			p.logger.Debug("AuthorizeAttribute not present in session claims")

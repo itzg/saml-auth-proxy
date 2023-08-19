@@ -103,7 +103,7 @@ func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
 	app := http.HandlerFunc(proxy.handler)
 	http.Handle("/saml/", middleware)
 	http.Handle("/_health", http.HandlerFunc(proxy.health))
-	http.Handle("/", middleware.RequireAccount(app))
+	http.Handle("/", authHandler(middleware, app, cfg.InitiateSessionPath))
 
 	logger.
 		With(zap.String("baseUrl", cfg.BaseUrl)).
@@ -111,6 +111,33 @@ func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
 		With(zap.String("binding", cfg.Bind)).
 		Info("Serving requests")
 	return http.ListenAndServe(cfg.Bind, nil)
+}
+
+func authHandler(middleware *samlsp.Middleware, handler http.Handler, initiateSessionPath string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := middleware.Session.GetSession(r)
+		if session != nil {
+			r = r.WithContext(samlsp.ContextWithSession(r.Context(), session))
+			handler.ServeHTTP(w, r)
+			return
+		}
+		if err == samlsp.ErrNoSession {
+			if initiateSessionPath == "" {
+				middleware.HandleStartAuthFlow(w, r)
+				return
+			}
+
+			if r.URL.Path == initiateSessionPath {
+				middleware.HandleStartAuthFlow(w, r)
+				return
+			}
+
+			handler.ServeHTTP(w, r)
+			return
+		}
+
+		middleware.OnError(w, r, err)
+	})
 }
 
 func fetchMetadata(ctx context.Context, client *http.Client, idpMetadataUrl *url.URL) (*saml.EntityDescriptor, error) {
