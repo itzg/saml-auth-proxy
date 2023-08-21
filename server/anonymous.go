@@ -16,15 +16,15 @@ func IsAnonymousSession(session samlsp.Session) bool {
 	return isAnonymous
 }
 
+// InitAnonymousSessionProvider will initially provide AnonymousSession instances when requested; however,
+// once the given initiateSessionPath is intercepted, then remaining session access is delegated to the
+// given delegateSessionProvider.
 type InitAnonymousSessionProvider struct {
 	delegateSessionProvider samlsp.SessionProvider
 	initiateSessionPath     string
 	logger                  *zap.Logger
 }
 
-// NewInitAnonymousSessionProvider will initially provide AnonymousSession instances when requested; however,
-// once the given initiateSessionPath is intercepted, then remaining session access is delegated to the
-// given delegateSessionProvider.
 func NewInitAnonymousSessionProvider(logger *zap.Logger, initiateSessionPath string, delegateSessionProvider samlsp.SessionProvider) *InitAnonymousSessionProvider {
 	return &InitAnonymousSessionProvider{
 		delegateSessionProvider: delegateSessionProvider,
