@@ -12,13 +12,7 @@ builds:
     - amd64
     - arm
 archives:
-  - replacements:
-      darwin: macosx
-      386: x86_32
-      amd64: x86_64
-    format: binary
-    files:
-      - none*
+  - format: binary
 dockers:
   - image_templates:
       - "itzg/{{.ProjectName}}:latest"
