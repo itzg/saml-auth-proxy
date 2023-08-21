@@ -23,3 +23,9 @@ jobs:
       - name: Run tests
         run: |
           go test ./...
+
+      - name: Check GoReleaser
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          version: latest
+          args: check
