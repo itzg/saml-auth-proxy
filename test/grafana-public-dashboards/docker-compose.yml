@@ -1,0 +1,48 @@
+version: '3.4'
+
+services:
+  proxy:
+    build:
+      context: ../..
+    environment:
+      SAML_PROXY_DEBUG: true
+      SAML_PROXY_IDP_METADATA_URL: https://samltest.id/saml/idp
+      SAML_PROXY_BASE_URL: ${BASE_URL}
+#      SAML_PROXY_BACKEND_URL: http://web-debug-server:8080
+      SAML_PROXY_BACKEND_URL: http://grafana:3000
+      SAML_PROXY_SP_KEY_PATH: /run/secrets/samlsp-key
+      SAML_PROXY_SP_CERT_PATH: /run/secrets/samlsp-cert
+      SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS: uid=x-webauth-user
+      SAML_PROXY_INITIATE_SESSION_PATH: /login
+    ports:
+      - "8080:8080"
+    secrets:
+      - samlsp-key
+      - samlsp-cert
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SERVER_ROOT_URL: ${BASE_URL}
+      GF_SECURITY_ADMIN_USER: rick
+      GF_AUTH_PROXY_ENABLED: "true"
+      GF_AUTH_PROXY_HEADER_NAME: X-WEBAUTH-USER
+      GF_FEATURE_TOGGLES_ENABLE: publicDashboards
+    volumes:
+      - grafana:/var/lib/grafana
+      - ./provisioning:/etc/grafana/provisioning
+      - ./dashboards:/var/lib/grafana/dashboards:ro
+  web-debug-server:
+    image: itzg/web-debug-server:1.2.3
+    ports:
+      - "8081:8080"
+
+volumes:
+  grafana: {}
+
+secrets:
+  samlsp-key:
+    file: saml-auth-proxy.key
+  samlsp-cert:
+    file: saml-auth-proxy.cert

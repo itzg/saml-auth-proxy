@@ -93,7 +93,12 @@ func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
 	cookieSessionProvider.Name = cfg.CookieName
 	cookieSessionProvider.Domain = cookieDomain
 	cookieSessionProvider.MaxAge = cfg.CookieMaxAge
-	middleware.Session = cookieSessionProvider
+
+	if cfg.InitiateSessionPath != "" {
+		middleware.Session = NewInitAnonymousSessionProvider(logger, cfg.InitiateSessionPath, cookieSessionProvider)
+	} else {
+		middleware.Session = cookieSessionProvider
+	}
 
 	proxy, err := NewProxy(logger, cfg)
 	if err != nil {

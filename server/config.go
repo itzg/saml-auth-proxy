@@ -26,4 +26,5 @@ type Config struct {
 	AuthVerifyPath          string            `default:"/_verify" usage:"Path under BaseUrl that will respond with a 200 when authenticated"`
 	Debug                   bool              `usage:"Enable debug logs"`
 	StaticRelayState        string            `usage:"A fixed RelayState value, such as a short URL. Will be trimmed to 80 characters to conform with SAML. The default generates random bytes that are Base64 encoded."`
+	InitiateSessionPath     string            `usage:"If set, initiates a SAML authentication flow only when a user visits this path. This will allow anonymous users to access to the backend."`
 }
