@@ -28,10 +28,9 @@ const (
 	HeaderForwardedFor    = "X-Forwarded-For"
 	HeaderForwardedHost   = "X-Forwarded-Host"
 	HeaderForwardedURI    = "X-Forwarded-Uri"
-	HeaderForwardedMethod = "X-Forwarded-Method"
 )
 
-type proxy struct {
+type Proxy struct {
 	config        *Config
 	backendUrl    *url.URL
 	client        *http.Client
@@ -39,7 +38,7 @@ type proxy struct {
 	logger        *zap.Logger
 }
 
-func NewProxy(logger *zap.Logger, cfg *Config) (*proxy, error) {
+func NewProxy(logger *zap.Logger, cfg *Config) (*Proxy, error) {
 	backendUrl, err := url.Parse(cfg.BackendUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse backend URL: %w", err)
@@ -52,7 +51,7 @@ func NewProxy(logger *zap.Logger, cfg *Config) (*proxy, error) {
 		},
 	}
 
-	proxy := &proxy{
+	proxy := &Proxy{
 		config:        cfg,
 		client:        client,
 		backendUrl:    backendUrl,
@@ -63,7 +62,7 @@ func NewProxy(logger *zap.Logger, cfg *Config) (*proxy, error) {
 	return proxy, nil
 }
 
-func (p *proxy) health(respOutWriter http.ResponseWriter, _ *http.Request) {
+func (p *Proxy) health(respOutWriter http.ResponseWriter, _ *http.Request) {
 	respOutWriter.Header().Set("Content-Type", "text/plain")
 	respOutWriter.WriteHeader(200)
 	_, err := respOutWriter.Write([]byte("OK"))
@@ -74,73 +73,58 @@ func (p *proxy) health(respOutWriter http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) {
+func (p *Proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) {
 
 	session := samlsp.SessionFromContext(reqIn.Context())
-	sessionClaims, ok := session.(samlsp.JWTSessionClaims)
-	if !ok {
-		p.logger.Error("session is not expected type")
-		respOutWriter.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 
-	authUsing, authorized := p.authorized(&sessionClaims)
-	if !authorized {
-		p.logger.Debug("Responding Unauthorized")
-		respOutWriter.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	if p.config.AuthVerify && reqIn.URL.Path == p.config.AuthVerifyPath {
-		p.logger.
-			With(zap.String("remoteAddr", reqIn.RemoteAddr)).
-			Debug("Responding with 204 to auth verify request")
-		p.addHeaders(sessionClaims, respOutWriter.Header())
-		respOutWriter.WriteHeader(204)
-		return
-	}
-
-	resolved, err := p.backendUrl.Parse(reqIn.URL.Path)
-	if err != nil {
-		p.logger.
-			With(zap.String("urlPath", reqIn.URL.Path)).
-			With(zap.Error(err)).
-			Error("failed to resolve backend URL")
-
-		respOutWriter.WriteHeader(500)
-		_, _ = respOutWriter.Write([]byte(fmt.Sprintf("Failed to resolve backend URL: %s", err.Error())))
-		return
-	}
-	resolved.RawQuery = reqIn.URL.RawQuery
-
-	reqOut, err := http.NewRequest(reqIn.Method, resolved.String(), reqIn.Body)
-	if err != nil {
-		p.logger.
-			With(zap.String("method", reqIn.Method)).
-			With(zap.Any("url", reqIn.URL)).
-			With(zap.Error(err)).
-			Error("unable to create new request")
-		respOutWriter.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	copyHeaders(reqOut.Header, reqIn.Header)
-
-	reqOut.Header.Del("Cookie")
-	cookies := reqIn.Cookies()
-	for _, cookie := range cookies {
-		if cookie.Name != p.config.CookieName {
-			reqOut.AddCookie(cookie)
+	var reqOut *http.Request
+	if IsAnonymousSession(session) {
+		reqOut = p.setupRequest(respOutWriter, reqIn)
+		if reqOut == nil {
+			return
 		}
-	}
 
-	p.checkForNewAuth(&sessionClaims)
+	} else {
+		sessionClaims, ok := session.(samlsp.JWTSessionClaims)
+		if !ok {
+			p.logger.Error("session is not expected type")
+			respOutWriter.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	p.addHeaders(sessionClaims, reqOut.Header)
+		authUsing, authorized := p.authorized(&sessionClaims)
+		if !authorized {
+			p.logger.Debug("Responding Unauthorized")
+			respOutWriter.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 
-	if p.config.NameIdMapping != "" {
-		reqOut.Header.Set(p.config.NameIdMapping,
-			sessionClaims.Subject)
+		if p.config.AuthVerify && reqIn.URL.Path == p.config.AuthVerifyPath {
+			p.logger.
+				With(zap.String("remoteAddr", reqIn.RemoteAddr)).
+				Debug("Responding with 204 to auth verify request")
+			p.addHeaders(sessionClaims, respOutWriter.Header())
+			respOutWriter.WriteHeader(204)
+			return
+		}
+
+		reqOut = p.setupRequest(respOutWriter, reqIn)
+		if reqOut == nil {
+			return
+		}
+
+		p.checkForNewAuth(&sessionClaims)
+
+		p.addHeaders(sessionClaims, reqOut.Header)
+
+		if p.config.NameIdMapping != "" {
+			reqOut.Header.Set(p.config.NameIdMapping,
+				sessionClaims.Subject)
+		}
+
+		if authUsing != "" {
+			reqOut.Header.Set(HeaderAuthorizedUsing, authUsing)
+		}
 	}
 
 	reqOut.Header.Set(HeaderForwardedHost, reqIn.Host)
@@ -155,9 +139,6 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	}
 	protoParts := strings.Split(reqIn.Proto, "/")
 	reqOut.Header.Set(HeaderForwardedProto, strings.ToLower(protoParts[0]))
-	if authUsing != "" {
-		reqOut.Header.Set(HeaderAuthorizedUsing, authUsing)
-	}
 
 	respIn, err := p.client.Do(reqOut)
 	if err != nil {
@@ -176,7 +157,44 @@ func (p *proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	}
 }
 
-func (p *proxy) addHeaders(sessionClaims samlsp.JWTSessionClaims, headers http.Header) {
+func (p *Proxy) setupRequest(respOutWriter http.ResponseWriter, reqIn *http.Request) *http.Request {
+	resolved, err := p.backendUrl.Parse(reqIn.URL.Path)
+	if err != nil {
+		p.logger.
+			With(zap.String("urlPath", reqIn.URL.Path)).
+			With(zap.Error(err)).
+			Error("failed to resolve backend URL")
+
+		respOutWriter.WriteHeader(500)
+		_, _ = respOutWriter.Write([]byte(fmt.Sprintf("Failed to resolve backend URL: %s", err.Error())))
+		return nil
+	}
+	resolved.RawQuery = reqIn.URL.RawQuery
+
+	reqOut, err := http.NewRequest(reqIn.Method, resolved.String(), reqIn.Body)
+	if err != nil {
+		p.logger.
+			With(zap.String("method", reqIn.Method)).
+			With(zap.Any("url", reqIn.URL)).
+			With(zap.Error(err)).
+			Error("unable to create new request")
+		respOutWriter.WriteHeader(http.StatusInternalServerError)
+		return nil
+	}
+
+	copyHeaders(reqOut.Header, reqIn.Header)
+
+	reqOut.Header.Del("Cookie")
+	cookies := reqIn.Cookies()
+	for _, cookie := range cookies {
+		if cookie.Name != p.config.CookieName {
+			reqOut.AddCookie(cookie)
+		}
+	}
+	return reqOut
+}
+
+func (p *Proxy) addHeaders(sessionClaims samlsp.JWTSessionClaims, headers http.Header) {
 	if p.config.AttributeHeaderMappings != nil {
 		for attr, hdr := range p.config.AttributeHeaderMappings {
 			if values, ok := sessionClaims.GetAttributes()[attr]; ok {
@@ -196,7 +214,7 @@ func (p *proxy) addHeaders(sessionClaims samlsp.JWTSessionClaims, headers http.H
 	}
 }
 
-func (p *proxy) checkForNewAuth(sessionClaims *samlsp.JWTSessionClaims) {
+func (p *Proxy) checkForNewAuth(sessionClaims *samlsp.JWTSessionClaims) {
 	if p.config.NewAuthWebhookUrl != "" && sessionClaims.IssuedAt >= time.Now().Unix()-1 {
 		err := p.newTokenCache.Add(sessionClaims.Id, sessionClaims, cache.DefaultExpiration)
 		if err == nil {
@@ -226,7 +244,7 @@ func (p *proxy) checkForNewAuth(sessionClaims *samlsp.JWTSessionClaims) {
 // authorized returns a boolean indication if the request is authorized.
 // The initial string return value is an attribute=value pair that was used to authorize the request.
 // If authorization was not configured the returned string is empty.
-func (p *proxy) authorized(sessionClaims *samlsp.JWTSessionClaims) (string, bool) {
+func (p *Proxy) authorized(sessionClaims *samlsp.JWTSessionClaims) (string, bool) {
 	if p.config.AuthorizeAttribute != "" {
 		values, exists := sessionClaims.GetAttributes()[p.config.AuthorizeAttribute]
 		if !exists {
