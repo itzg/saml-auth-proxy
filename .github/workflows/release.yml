@@ -27,7 +27,7 @@ jobs:
           go test ./...
 
       - name: Setup docker buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
 
