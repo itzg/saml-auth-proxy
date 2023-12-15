@@ -7,6 +7,7 @@ type Config struct {
 	Bind                    string            `default:":8080" usage:"[host:port] to bind for serving HTTP"`
 	BaseUrl                 string            `usage:"External [URL] of this proxy"`
 	BackendUrl              string            `usage:"[URL] of the backend being proxied"`
+	EntityID                string            `usage:"Entity ID of this service provider"`
 	IdpMetadataUrl          string            `usage:"[URL] of the IdP's metadata XML, can be a local file by specifying the file:// scheme"`
 	IdpCaPath               string            `usage:"Optional [path] to a CA certificate PEM file for the IdP"`
 	NameIdFormat            string            `usage:"One of unspecified, transient, email, or persistent to use a standard format or give a full URN of the name ID format" default:"transient"`
@@ -14,7 +15,7 @@ type Config struct {
 	SpCertPath              string            `default:"saml-auth-proxy.cert" usage:"The [path] to the X509 public certificate PEM file for this SP"`
 	NameIdMapping           string            `usage:"Name of the request [header] to convey the SAML nameID/subject"`
 	AttributeHeaderMappings map[string]string `usage:"Comma separated list of [attribute=header] pairs mapping SAML IdP response attributes to forwarded request header"`
-	AttributeHeaderWildcard string            `usage:"Maps all SAML attributes with this option as a prefix"`
+	AttributeHeaderWildcard string            `usage:"Maps all SAML attributes with this option as a prefix, slashes in attribute names will be replaced by dashes"`
 	NewAuthWebhookUrl       string            `usage:"[URL] of webhook that will get POST'ed when a new authentication is processed"`
 	AuthorizeAttribute      string            `usage:"Enables authorization and specifies the [attribute] to check for authorized values"`
 	AuthorizeValues         []string          `usage:"If enabled, comma separated list of [values] that must be present in the authorize attribute"`
