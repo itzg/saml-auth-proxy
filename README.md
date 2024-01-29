@@ -12,7 +12,7 @@ Provides a SAML SP authentication proxy for backend web services
   -attribute-header-mappings attribute=header
         Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header (env SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS)
   -attribute-header-wildcard string
-         (env SAML_PROXY_ATTRIBUTE_HEADER_WILDCARD)
+        Maps all SAML attributes with this option as a prefix, slashes in attribute names will be replaced by dashes (env SAML_PROXY_ATTRIBUTE_HEADER_WILDCARD)
   -auth-verify bool
         Enables verify path endpoint for forward auth and trusts X-Forwarded headers (env SAML_PROXY_AUTH_VERIFY)
   -auth-verify-path string
@@ -33,6 +33,8 @@ Provides a SAML SP authentication proxy for backend web services
         Specifies the amount of time the authentication token will remain valid (env SAML_PROXY_COOKIE_MAX_AGE) (default 2h0m0s) 
   -cookie-name string
         Name of the cookie that tracks session token (env SAML_PROXY_COOKIE_NAME) (default "token")
+  -entity-id string
+        Entity ID of this service provider (env SAML_PROXY_ENTITY_ID)
   -idp-ca-path path
         Optional path to a CA certificate PEM file for the IdP (env SAML_PROXY_IDP_CA_PATH)
   -idp-metadata-url URL

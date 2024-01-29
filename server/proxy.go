@@ -208,6 +208,9 @@ func (p *Proxy) addHeaders(sessionClaims samlsp.JWTSessionClaims, headers http.H
 	if p.config.AttributeHeaderWildcard != "" {
 		for attr, values := range sessionClaims.GetAttributes() {
 			for _, value := range values {
+				if uri, err := url.Parse(attr); err == nil {
+					attr = strings.Trim(strings.Replace(uri.Path, "/", "-", -1), "-")
+				}
 				headers.Add(p.config.AttributeHeaderWildcard+attr, value)
 			}
 		}

@@ -52,6 +52,9 @@ func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
 		Certificate:       keyPair.Leaf,
 		AllowIDPInitiated: cfg.AllowIdpInitiated,
 	}
+	if cfg.EntityID != "" {
+		samlOpts.EntityID = cfg.EntityID
+	}
 
 	samlOpts.IDPMetadata, err = fetchMetadata(ctx, httpClient, idpMetadataUrl)
 	if err != nil {
