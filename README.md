@@ -51,6 +51,8 @@ Provides a SAML SP authentication proxy for backend web services
         Name of the request header to convey the SAML nameID/subject (env SAML_PROXY_NAME_ID_MAPPING)
   -new-auth-webhook-url URL
         URL of webhook that will get POST'ed when a new authentication is processed (env SAML_PROXY_NEW_AUTH_WEBHOOK_URL)
+  -sign-requests
+        If set, enables SAML request signing (env SAML_PROXY_SIGN_REQUESTS)
   -sp-cert-path path
         The path to the X509 public certificate PEM file for this SP (env SAML_PROXY_SP_CERT_PATH) (default "saml-auth-proxy.cert")
   -sp-key-path path

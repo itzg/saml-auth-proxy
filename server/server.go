@@ -51,6 +51,7 @@ func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
 		Key:               keyPair.PrivateKey.(*rsa.PrivateKey),
 		Certificate:       keyPair.Leaf,
 		AllowIDPInitiated: cfg.AllowIdpInitiated,
+		SignRequest:       cfg.SignRequests,
 	}
 	if cfg.EntityID != "" {
 		samlOpts.EntityID = cfg.EntityID
