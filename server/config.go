@@ -28,4 +28,5 @@ type Config struct {
 	Debug                   bool              `usage:"Enable debug logs"`
 	StaticRelayState        string            `usage:"A fixed RelayState value, such as a short URL. Will be trimmed to 80 characters to conform with SAML. The default generates random bytes that are Base64 encoded."`
 	InitiateSessionPath     string            `usage:"If set, initiates a SAML authentication flow only when a user visits this path. This will allow anonymous users to access to the backend."`
+	SignRequests            bool              `usage:"If set, enables SAML request signing"`
 }
