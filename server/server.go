@@ -7,12 +7,13 @@ import (
 	"crypto/x509"
 	"encoding/xml"
 	"fmt"
-	"go.uber.org/zap"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -124,7 +125,7 @@ func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
 
 func fetchMetadata(ctx context.Context, client *http.Client, idpMetadataUrl *url.URL) (*saml.EntityDescriptor, error) {
 	if idpMetadataUrl.Scheme == "file" {
-		data, err := ioutil.ReadFile(idpMetadataUrl.Path)
+		data, err := os.ReadFile(idpMetadataUrl.Path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read IdP metadata file.: %w", err)
 		}
@@ -150,7 +151,7 @@ func setupHttpClient(idpCaFile string) (*http.Client, error) {
 		rootCAs = x509.NewCertPool()
 	}
 
-	certs, err := ioutil.ReadFile(idpCaFile)
+	certs, err := os.ReadFile(idpCaFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read IdP CA file: %w", err)
 	}
