@@ -8,6 +8,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,7 +22,7 @@ import (
 
 const fetchMetadataTimeout = 30 * time.Second
 
-func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
+func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *Config) error {
 	keyPair, err := tls.LoadX509KeyPair(cfg.SpCertPath, cfg.SpKeyPath)
 	if err != nil {
 		return fmt.Errorf("failed to load SP key and certificate: %w", err)
@@ -120,7 +121,7 @@ func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
 		With(zap.String("backendUrl", cfg.BackendUrl)).
 		With(zap.String("binding", cfg.Bind)).
 		Info("Serving requests")
-	return http.ListenAndServe(cfg.Bind, nil)
+	return http.Serve(listener, nil)
 }
 
 func fetchMetadata(ctx context.Context, client *http.Client, idpMetadataUrl *url.URL) (*saml.EntityDescriptor, error) {
