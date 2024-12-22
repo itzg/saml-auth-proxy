@@ -7,12 +7,13 @@ import (
 	"crypto/x509"
 	"encoding/xml"
 	"fmt"
-	"go.uber.org/zap"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -110,6 +111,11 @@ func Start(ctx context.Context, logger *zap.Logger, cfg *Config) error {
 	}
 
 	app := http.HandlerFunc(proxy.handler)
+	if cfg.AuthVerify {
+		http.Handle(cfg.AuthVerifyPath, authVerify(middleware))
+	}
+
+	http.Handle("/saml/sign_in", http.HandlerFunc(middleware.HandleStartAuthFlow))
 	http.Handle("/saml/", middleware)
 	http.Handle("/_health", http.HandlerFunc(proxy.health))
 	http.Handle("/", middleware.RequireAccount(app))
@@ -167,4 +173,23 @@ func setupHttpClient(idpCaFile string) (*http.Client, error) {
 	client := &http.Client{Transport: tr}
 
 	return client, nil
+}
+
+func authVerify(middleware *samlsp.Middleware) http.Handler {
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		session, err := middleware.Session.GetSession(r)
+
+		if session != nil {
+			w.WriteHeader(204)
+			return
+		}
+
+		if err == samlsp.ErrNoSession {
+			w.WriteHeader(401)
+			return
+		}
+
+	})
 }
