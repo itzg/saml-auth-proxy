@@ -99,15 +99,6 @@ func (p *Proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 			return
 		}
 
-		if p.config.AuthVerify && reqIn.URL.Path == p.config.AuthVerifyPath {
-			p.logger.
-				With(zap.String("remoteAddr", reqIn.RemoteAddr)).
-				Debug("Responding with 204 to auth verify request")
-			p.addHeaders(sessionClaims, respOutWriter.Header())
-			respOutWriter.WriteHeader(204)
-			return
-		}
-
 		reqOut = p.setupRequest(respOutWriter, reqIn)
 		if reqOut == nil {
 			return
