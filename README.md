@@ -118,7 +118,7 @@ as a SAML IdP.
 Start the supplied Grafana and Web Debug Server using Docker Compose:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Create a domain name that resolves to 127.0.0.1 and use that as the `BASE_FQDN` in the following
@@ -138,14 +138,14 @@ Start saml-auth-proxy using:
 ./saml-auth-proxy \
   --base-url http://${BASE_FQDN}:8080 \
   --backend-url http://localhost:3000 \
-  --idp-metadata-url=https://samltest.id/saml/idp \
+  --idp-metadata-url=https://idp.ssocircle.com/meta-idp.xml \
   --attribute-header-mappings UserID=x-webauth-user
 ```
 
 Generate your SP's SAML metadata by accessing the built-in metadata endpoint:
 
 ```bash
-curl localhost:8080/saml/metadata > saml-sp-metadata.xml
+curl http://localhost:8080/saml/metadata > saml-sp-metadata.xml
 ```
 
 or with PowerShell
@@ -154,7 +154,7 @@ Invoke-RestMethod -Uri http://localhost:8080/saml/metadata -OutFile .\saml-sp-me
 ```
 
 You can upload the  file `saml-sp-metadata.xml` file at 
-[samltest.id](https://samltest.id/upload.php).
+[SSOCircle's Manage SP Meta Data](https://idp.ssocircle.com/sso/hos/ManageSPMetadata.jsp).
 
 **Note** you will also be selecting the attributes that will be included in the assertion in the SAML authentication response, such as: 
 - `FirstName`
@@ -171,7 +171,7 @@ To try out authorization you would add the following arguments referencing somet
 
 Now you can open your browser and navigate to `http://${BASE_FQDN}:8080`. You will be redirected via SAMLTest's login page and then be returned with access to Grafana.
 
-Force a logout from the IdP by going to <https://samltest.id/idp/profile/Logout>
+Force a logout from the IdP by going to <https://idp.ssocircle.com/sso/UI/Logout>
 
 ## Troubleshooting
 
