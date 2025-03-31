@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 
 	"github.com/crewjam/saml/samlsp"
@@ -36,6 +37,7 @@ type Proxy struct {
 	client        *http.Client
 	newTokenCache *cache.Cache
 	logger        *zap.Logger
+	upgrader      websocket.Upgrader
 }
 
 func NewProxy(logger *zap.Logger, cfg *Config) (*Proxy, error) {
@@ -57,6 +59,13 @@ func NewProxy(logger *zap.Logger, cfg *Config) (*Proxy, error) {
 		backendUrl:    backendUrl,
 		newTokenCache: cache.New(newTokenCacheExpiration, newTokenCacheCleanupInterval),
 		logger:        logger,
+		upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
 	}
 
 	return proxy, nil
@@ -74,6 +83,11 @@ func (p *Proxy) health(respOutWriter http.ResponseWriter, _ *http.Request) {
 }
 
 func (p *Proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) {
+	// Check if this is a WebSocket upgrade request
+	if websocket.IsWebSocketUpgrade(reqIn) {
+		p.handleWebSocket(respOutWriter, reqIn)
+		return
+	}
 
 	session := samlsp.SessionFromContext(reqIn.Context())
 
