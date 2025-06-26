@@ -2,7 +2,7 @@ module github.com/itzg/saml-auth-proxy
 
 require (
 	github.com/crewjam/saml v0.4.14
-	github.com/go-jose/go-jose/v4 v4.1.0
+	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/gorilla/websocket v1.5.3
 	github.com/itzg/go-flagsfiller v1.15.2
 	github.com/itzg/zapconfigs v0.1.0
