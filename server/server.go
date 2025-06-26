@@ -96,7 +96,11 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 		TrustForwardedHeaders: cfg.AuthVerify,
 	}
 	cookieSessionProvider := samlsp.DefaultSessionProvider(samlOpts)
-	cookieSessionProvider.Codec = JWESessionCodec{wrapped: cookieSessionProvider.Codec}
+	sessionCodec, err := NewJWESessionCodec(cookieSessionProvider.Codec)
+	if err != nil {
+		return fmt.Errorf("failed to create jwe session codec: %s", err)
+	}
+	cookieSessionProvider.Codec = sessionCodec
 	cookieSessionProvider.Name = cfg.CookieName
 	cookieSessionProvider.Domain = cookieDomain
 	cookieSessionProvider.MaxAge = cfg.CookieMaxAge
