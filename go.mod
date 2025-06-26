@@ -21,6 +21,7 @@ require (
 	github.com/russellhaering/goxmldsig v1.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
+	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 )
 
 go 1.23.0
