@@ -96,6 +96,7 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 		TrustForwardedHeaders: cfg.AuthVerify,
 	}
 	cookieSessionProvider := samlsp.DefaultSessionProvider(samlOpts)
+	cookieSessionProvider.Codec = JWESessionCodec{wrapped: cookieSessionProvider.Codec}
 	cookieSessionProvider.Name = cfg.CookieName
 	cookieSessionProvider.Domain = cookieDomain
 	cookieSessionProvider.MaxAge = cfg.CookieMaxAge
