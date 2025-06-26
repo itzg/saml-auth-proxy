@@ -25,7 +25,7 @@ func NewJWESessionCodec(wrapped samlsp.SessionCodec) (samlsp.SessionCodec, error
 	publicKey := &codec.Key.PublicKey
 	privateKey := codec.Key
 
-	// create a JWE encrypter
+	// create a JWE encrypter (possible to parameterize jose.ContentEncryptionAlgorithm and jose.KeyAlgorithm)
 	encrypter, err := jose.NewEncrypter(jose.A128GCM, jose.Recipient{Algorithm: jose.RSA_OAEP, Key: publicKey}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create jwe encrypter: %w", err)

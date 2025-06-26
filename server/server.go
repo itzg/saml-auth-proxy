@@ -98,7 +98,7 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 	cookieSessionProvider := samlsp.DefaultSessionProvider(samlOpts)
 	sessionCodec, err := NewJWESessionCodec(cookieSessionProvider.Codec)
 	if err != nil {
-		return fmt.Errorf("failed to create jwe session codec: %s", err)
+		return fmt.Errorf("failed to create jwe session codec: %w", err)
 	}
 	cookieSessionProvider.Codec = sessionCodec
 	cookieSessionProvider.Name = cfg.CookieName
