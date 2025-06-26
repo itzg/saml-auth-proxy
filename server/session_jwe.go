@@ -6,7 +6,7 @@ import (
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
-	"gopkg.in/square/go-jose.v2"
+	"github.com/go-jose/go-jose/v4"
 )
 
 // JWESessionCodec wraps a standard SessionCodec and applies JWE encryption to protect sensitive attributes
@@ -25,7 +25,7 @@ func NewJWESessionCodec(wrapped samlsp.SessionCodec) (samlsp.SessionCodec, error
 	publicKey := &codec.Key.PublicKey
 	privateKey := codec.Key
 
-	// create a JWE encrypter (possible to parameterize jose.ContentEncryptionAlgorithm and jose.KeyAlgorithm)
+	// create a JWE encrypter (possible to parameterize jose.ContentEncryption and jose.KeyAlgorithm)
 	encrypter, err := jose.NewEncrypter(jose.A128GCM, jose.Recipient{Algorithm: jose.RSA_OAEP, Key: publicKey}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create jwe encrypter: %w", err)
@@ -58,8 +58,8 @@ func (c JWESessionCodec) Encode(s samlsp.Session) (string, error) {
 // Decode first decrypts the JWE payload to get the signed JWT (JWS), and then uses the wrapped codec to decode and
 // validate the JWS
 func (c JWESessionCodec) Decode(encrypted string) (samlsp.Session, error) {
-	// parse the JWE token
-	jwe, err := jose.ParseEncrypted(encrypted)
+	// parse the JWE token (possible to parameterize jose.ContentEncryption and jose.KeyAlgorithm)
+	jwe, err := jose.ParseEncrypted(encrypted, []jose.KeyAlgorithm{jose.RSA_OAEP}, []jose.ContentEncryption{jose.A128GCM})
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse jwe token: %w", err)
 	}
