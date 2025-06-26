@@ -6,7 +6,7 @@ import (
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
-	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v3"
 )
 
 // JWESessionCodec wraps a standard SessionCodec and applies JWE encryption to protect sensitive attributes
@@ -58,8 +58,8 @@ func (c JWESessionCodec) Encode(s samlsp.Session) (string, error) {
 // Decode first decrypts the JWE payload to get the signed JWT (JWS), and then uses the wrapped codec to decode and
 // validate the JWS
 func (c JWESessionCodec) Decode(encrypted string) (samlsp.Session, error) {
-	// parse the JWE token (possible to parameterize jose.ContentEncryption and jose.KeyAlgorithm)
-	jwe, err := jose.ParseEncrypted(encrypted, []jose.KeyAlgorithm{jose.RSA_OAEP}, []jose.ContentEncryption{jose.A128GCM})
+	// parse the JWE token
+	jwe, err := jose.ParseEncrypted(encrypted)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse jwe token: %w", err)
 	}
