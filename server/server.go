@@ -99,6 +99,9 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 	cookieSessionProvider.Name = cfg.CookieName
 	cookieSessionProvider.Domain = cookieDomain
 	cookieSessionProvider.MaxAge = cfg.CookieMaxAge
+	codec := samlsp.DefaultSessionCodec(samlOpts)
+	codec.MaxAge = cfg.CookieMaxAge
+	cookieSessionProvider.Codec = codec
 
 	if cfg.InitiateSessionPath != "" {
 		middleware.Session = NewInitAnonymousSessionProvider(logger, cfg.InitiateSessionPath, cookieSessionProvider)
