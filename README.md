@@ -43,10 +43,6 @@ Provides a SAML SP authentication proxy for backend web services
         If set, initiates a SAML authentication flow only when a user visits this path. This will allow anonymous users to access to the backend. (env SAML_PROXY_INITIATE_SESSION_PATH)
   -name-id-format string
         One of unspecified, transient, email, or persistent to use a standard format or give a full URN of the name ID format (env SAML_PROXY_NAME_ID_FORMAT) (default "transient")
-  -idp-metadata-url URL
-        URL of the IdP's metadata XML, can be a local file by specifying the file:// scheme (env SAML_PROXY_IDP_METADATA_URL)
-  -name-id-format string
-        One of unspecified, transient, email, or persistent to use a standard format or give a full URN of the name ID format (env SAML_PROXY_NAME_ID_FORMAT) (default "transient")
   -name-id-mapping header
         Name of the request header to convey the SAML nameID/subject (env SAML_PROXY_NAME_ID_MAPPING)
   -new-auth-webhook-url URL
