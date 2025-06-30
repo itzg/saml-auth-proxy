@@ -9,19 +9,15 @@ import (
 	"github.com/go-jose/go-jose/v4"
 )
 
-// JWESessionCodec wraps a standard SessionCodec and applies JWE encryption to protect sensitive attributes
+// JWESessionCodec wraps a JWTSessionCodec and applies JWE encryption to protect sensitive attributes
 type JWESessionCodec struct {
-	wrapped    samlsp.SessionCodec
-	encrypter  jose.Encrypter
-	privateKey *rsa.PrivateKey
+	jwtSessionCodec *samlsp.JWTSessionCodec
+	encrypter       jose.Encrypter
+	privateKey      *rsa.PrivateKey
 }
 
-func NewJWESessionCodec(wrapped samlsp.SessionCodec) (samlsp.SessionCodec, error) {
+func NewJWESessionCodec(codec *samlsp.JWTSessionCodec) (samlsp.SessionCodec, error) {
 	// get the public and private key from the underlying codec to use for encryption
-	codec, ok := wrapped.(samlsp.JWTSessionCodec)
-	if !ok {
-		return nil, fmt.Errorf("wrapped session codec is not a JWTSessionCodec")
-	}
 	publicKey := &codec.Key.PublicKey
 	privateKey := codec.Key
 
@@ -31,17 +27,17 @@ func NewJWESessionCodec(wrapped samlsp.SessionCodec) (samlsp.SessionCodec, error
 		return nil, fmt.Errorf("failed to create jwe encrypter: %w", err)
 	}
 
-	return &JWESessionCodec{wrapped: wrapped, encrypter: encrypter, privateKey: privateKey}, nil
+	return &JWESessionCodec{jwtSessionCodec: codec, encrypter: encrypter, privateKey: privateKey}, nil
 }
 
 func (c *JWESessionCodec) New(assertion *saml.Assertion) (samlsp.Session, error) {
-	return c.wrapped.New(assertion)
+	return c.jwtSessionCodec.New(assertion)
 }
 
 // Encode first creates a signed JWT (JWS) using the wrapped codec, and then encrypts the entire JWS payload using JWE.
 func (c *JWESessionCodec) Encode(s samlsp.Session) (string, error) {
 	// get the signed JWT (JWS) from the underlying codec
-	signed, err := c.wrapped.Encode(s)
+	signed, err := c.jwtSessionCodec.Encode(s)
 	if err != nil {
 		return "", fmt.Errorf("failed to encode and sign inner session: %w", err)
 	}
@@ -71,5 +67,5 @@ func (c *JWESessionCodec) Decode(encrypted string) (samlsp.Session, error) {
 	}
 
 	// decode the inner JWS using the wrapped codec
-	return c.wrapped.Decode(string(decrypted))
+	return c.jwtSessionCodec.Decode(string(decrypted))
 }
