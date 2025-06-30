@@ -16,7 +16,12 @@ type JWESessionCodec struct {
 	privateKey      *rsa.PrivateKey
 }
 
-func NewJWESessionCodec(codec *samlsp.JWTSessionCodec) (samlsp.SessionCodec, error) {
+func NewJWESessionCodec(sessionCodec samlsp.SessionCodec) (samlsp.SessionCodec, error) {
+	codec, ok := sessionCodec.(samlsp.JWTSessionCodec)
+	if !ok {
+		return nil, fmt.Errorf("session codec isn't JWT session codec")
+	}
+
 	// get the public and private key from the underlying codec to use for encryption
 	publicKey := &codec.Key.PublicKey
 	privateKey := codec.Key
@@ -27,7 +32,7 @@ func NewJWESessionCodec(codec *samlsp.JWTSessionCodec) (samlsp.SessionCodec, err
 		return nil, fmt.Errorf("failed to create jwe encrypter: %w", err)
 	}
 
-	return &JWESessionCodec{jwtSessionCodec: codec, encrypter: encrypter, privateKey: privateKey}, nil
+	return &JWESessionCodec{jwtSessionCodec: &codec, encrypter: encrypter, privateKey: privateKey}, nil
 }
 
 func (c *JWESessionCodec) New(assertion *saml.Assertion) (samlsp.Session, error) {

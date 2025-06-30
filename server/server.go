@@ -99,16 +99,12 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 	cookieSessionProvider.Name = cfg.CookieName
 	cookieSessionProvider.Domain = cookieDomain
 	cookieSessionProvider.MaxAge = cfg.CookieMaxAge
-
-	// default session provider uses JWT, so we can safely cast it
-	jwtSessionCodec, ok := cookieSessionProvider.Codec.(*samlsp.JWTSessionCodec)
-	if !ok {
-		return fmt.Errorf("session provider codec isn't a JWT session codec")
-	}
-	jwtSessionCodec.MaxAge = cfg.CookieMaxAge
+	codec := samlsp.DefaultSessionCodec(samlOpts)
+	codec.MaxAge = cfg.CookieMaxAge
+	cookieSessionProvider.Codec = codec
 
 	if cfg.EncryptJWT {
-		jweSessionCodec, err := NewJWESessionCodec(jwtSessionCodec)
+		jweSessionCodec, err := NewJWESessionCodec(cookieSessionProvider.Codec)
 		if err != nil {
 			return fmt.Errorf("failed to create jwe session codec: %w", err)
 		}
