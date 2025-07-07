@@ -21,8 +21,8 @@ github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aN
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/iancoleman/strcase v0.3.0 h1:nTXanmYxhfFAMjZL34Ov6gkzEsSJZ5DbhxWjvSASxEI=
 github.com/iancoleman/strcase v0.3.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
-github.com/itzg/go-flagsfiller v1.15.2 h1:DvhhOKuqzawoa6C/3Q/y8pFbdO5PBdgnIvz84ZGkY0g=
-github.com/itzg/go-flagsfiller v1.15.2/go.mod h1:XmllPPi99O7vXTG9wa/Hzmhnkv6BXBF1W57ifbQTVs4=
+github.com/itzg/go-flagsfiller v1.16.0 h1:YNwjLzFIeFzZpctT2RiN8T5qxiGrCX33bGSwtN6OSAA=
+github.com/itzg/go-flagsfiller v1.16.0/go.mod h1:XmllPPi99O7vXTG9wa/Hzmhnkv6BXBF1W57ifbQTVs4=
 github.com/itzg/zapconfigs v0.1.0 h1:Gokocm8VaTNnZjvIiVA5NEhzZ1v7lEyXY/AbeBmq6YQ=
 github.com/itzg/zapconfigs v0.1.0/go.mod h1:y4dArgRUOFbGRkUNJ8XSSw98FGn03wtkvMPy+OSA5Rc=
 github.com/jonboulle/clockwork v0.2.2/go.mod h1:Pkfl5aHPm1nk2H9h0bjmnJD/BcgbGXUBGnn1kMkgxc8=
