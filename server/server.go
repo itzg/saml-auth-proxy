@@ -124,7 +124,11 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 
 	app := http.HandlerFunc(proxy.handler)
 	if cfg.AuthVerify {
-		http.Handle(cfg.AuthVerifyPath, authVerify(middleware))
+		if cfg.AuthVerifyRequireLogin {
+			http.Handle(cfg.AuthVerifyPath, middleware.RequireAccount(http.HandlerFunc(noContentHandler)))
+		} else {
+			http.Handle(cfg.AuthVerifyPath, authVerify(middleware))
+		}
 	}
 
 	http.Handle("/saml/sign_in", http.HandlerFunc(middleware.HandleStartAuthFlow))
@@ -185,6 +189,11 @@ func setupHttpClient(idpCaFile string) (*http.Client, error) {
 	client := &http.Client{Transport: tr}
 
 	return client, nil
+}
+
+// HTTP handler that replies to each request with a “204 no content”.
+func noContentHandler(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func authVerify(middleware *samlsp.Middleware) http.Handler {
