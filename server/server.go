@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"gorm.io/gorm/logger"
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -126,7 +125,7 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 	app := http.HandlerFunc(proxy.handler)
 	if cfg.AuthVerify {
 		if cfg.AuthVerifyRequireLogin {
-			http.Handle(cfg.AuthVerifyPath, authVerifyWithLogin(proxy, middleware))
+			http.Handle(cfg.AuthVerifyPath, authVerifyWithLogin(logger, proxy, middleware))
 		} else {
 			http.Handle(cfg.AuthVerifyPath, authVerify(middleware))
 		}
@@ -192,7 +191,7 @@ func setupHttpClient(idpCaFile string) (*http.Client, error) {
 	return client, nil
 }
 
-func authVerifyWithLogin(proxy *Proxy, middleware *samlsp.Middleware) http.Handler {
+func authVerifyWithLogin(logger *zap.Logger, proxy *Proxy, middleware *samlsp.Middleware) http.Handler {
 	return middleware.RequireAccount(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session := samlsp.SessionFromContext(r.Context())
 
