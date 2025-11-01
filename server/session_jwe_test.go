@@ -24,7 +24,7 @@ func TestJWESessionCodec(t *testing.T) {
 	jwtCodec := samlsp.DefaultSessionCodec(samlsp.Options{Key: key, URL: *baseURL})
 
 	// Create the JWESessionCodec
-	jweCodec, err := NewJWESessionCodec(jwtCodec)
+	jweCodec, err := NewJWESessionCodec(jwtCodec, key.Public(), key)
 	if err != nil {
 		t.Fatalf("failed to create JWESessionCodec: %v", err)
 	}
