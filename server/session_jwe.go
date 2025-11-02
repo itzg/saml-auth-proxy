@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto"
 	"crypto/rsa"
 	"fmt"
 
@@ -16,15 +17,11 @@ type JWESessionCodec struct {
 	privateKey      *rsa.PrivateKey
 }
 
-func NewJWESessionCodec(sessionCodec samlsp.SessionCodec) (samlsp.SessionCodec, error) {
+func NewJWESessionCodec(sessionCodec samlsp.SessionCodec, publicKey crypto.PublicKey, privateKey *rsa.PrivateKey) (samlsp.SessionCodec, error) {
 	codec, ok := sessionCodec.(samlsp.JWTSessionCodec)
 	if !ok {
 		return nil, fmt.Errorf("session codec isn't JWT session codec")
 	}
-
-	// get the public and private key from the underlying codec to use for encryption
-	publicKey := &codec.Key.PublicKey
-	privateKey := codec.Key
 
 	// create a JWE encrypter (possible to parameterize jose.ContentEncryption and jose.KeyAlgorithm)
 	encrypter, err := jose.NewEncrypter(jose.A128GCM, jose.Recipient{Algorithm: jose.RSA_OAEP, Key: publicKey}, nil)

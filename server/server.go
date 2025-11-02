@@ -32,6 +32,7 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 	if err != nil {
 		return fmt.Errorf("failed to parse SP certificate: %w", err)
 	}
+	privateKey := keyPair.PrivateKey.(*rsa.PrivateKey)
 
 	idpMetadataUrl, err := url.Parse(cfg.IdpMetadataUrl)
 	if err != nil {
@@ -50,7 +51,7 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 
 	samlOpts := samlsp.Options{
 		URL:               *rootUrl,
-		Key:               keyPair.PrivateKey.(*rsa.PrivateKey),
+		Key:               privateKey,
 		Certificate:       keyPair.Leaf,
 		AllowIDPInitiated: cfg.AllowIdpInitiated,
 		SignRequest:       cfg.SignRequests,
@@ -89,7 +90,7 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 	middleware.RequestTracker = CookieRequestTracker{
 		CookieRequestTracker: samlsp.DefaultRequestTracker(samlsp.Options{
 			URL: *rootUrl,
-			Key: keyPair.PrivateKey.(*rsa.PrivateKey),
+			Key: privateKey,
 		}, &middleware.ServiceProvider),
 		CookieDomain:          cookieDomain,
 		StaticRelayState:      cfg.StaticRelayState,
@@ -99,12 +100,13 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 	cookieSessionProvider.Name = cfg.CookieName
 	cookieSessionProvider.Domain = cookieDomain
 	cookieSessionProvider.MaxAge = cfg.CookieMaxAge
+	cookieSessionProvider.HTTPOnly = true
 	codec := samlsp.DefaultSessionCodec(samlOpts)
 	codec.MaxAge = cfg.CookieMaxAge
 	cookieSessionProvider.Codec = codec
 
 	if cfg.EncryptJWT {
-		jweSessionCodec, err := NewJWESessionCodec(cookieSessionProvider.Codec)
+		jweSessionCodec, err := NewJWESessionCodec(codec, codec.Key.Public(), privateKey)
 		if err != nil {
 			return fmt.Errorf("failed to create jwe session codec: %w", err)
 		}
