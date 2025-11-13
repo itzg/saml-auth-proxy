@@ -16,7 +16,7 @@ Provides a SAML SP authentication proxy for backend web services
   -auth-verify bool
         Enables verify path endpoint for forward auth and trusts X-Forwarded headers (env SAML_PROXY_AUTH_VERIFY)
   -auth-verify-path string
-        Path under BaseUrl that will respond with a 200 when authenticated (env SAML_PROXY_AUTH_VERIFY_PATH) (default "/_verify")
+        Path under BaseUrl that will respond with a 204 when authenticated (env SAML_PROXY_AUTH_VERIFY_PATH) (default "/_verify")
   -authorize-attribute attribute
         Enables authorization and specifies the attribute to check for authorized values (env SAML_PROXY_AUTHORIZE_ATTRIBUTE)
   -authorize-values values
