@@ -24,7 +24,7 @@ type Config struct {
 	CookieDomain            string            `usage:"Overrides the domain set on the session cookie. By default the BaseUrl host is used."`
 	AllowIdpInitiated       bool              `usage:"If set, allows for IdP initiated authentication flow"`
 	AuthVerify              bool              `usage:"Enables verify path endpoint for forward auth and trusts X-Forwarded headers"`
-	AuthVerifyPath          string            `default:"/_verify" usage:"Path under BaseUrl that will respond with a 200 when authenticated"`
+	AuthVerifyPath          string            `default:"/_verify" usage:"Path under BaseUrl that will respond with a 204 when authenticated"`
 	AuthVerifyRequireLogin  bool              `usage:"If set, trigger a login if the user is not authenticated during verify"`
 	Debug                   bool              `usage:"Enable debug logs"`
 	StaticRelayState        string            `usage:"A fixed RelayState value, such as a short URL. Will be trimmed to 80 characters to conform with SAML. The default generates random bytes that are Base64 encoded."`
