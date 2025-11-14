@@ -13,10 +13,12 @@ Provides a SAML SP authentication proxy for backend web services
         Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header (env SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS)
   -attribute-header-wildcard string
         Maps all SAML attributes with this option as a prefix, slashes in attribute names will be replaced by dashes (env SAML_PROXY_ATTRIBUTE_HEADER_WILDCARD)
-  -auth-verify bool
+  -auth-verify
         Enables verify path endpoint for forward auth and trusts X-Forwarded headers (env SAML_PROXY_AUTH_VERIFY)
   -auth-verify-path string
-        Path under BaseUrl that will respond with a 200 when authenticated (env SAML_PROXY_AUTH_VERIFY_PATH) (default "/_verify")
+        Path under BaseUrl that will respond with a 204 when authenticated (env SAML_PROXY_AUTH_VERIFY_PATH) (default "/_verify")
+  -auth-verify-require-login
+        If set, trigger a login if the user is not authenticated during verify (env SAML_PROXY_AUTH_VERIFY_REQUIRE_LOGIN)
   -authorize-attribute attribute
         Enables authorization and specifies the attribute to check for authorized values (env SAML_PROXY_AUTHORIZE_ATTRIBUTE)
   -authorize-values values
@@ -30,16 +32,20 @@ Provides a SAML SP authentication proxy for backend web services
   -cookie-domain string
         Overrides the domain set on the session cookie. By default the BaseUrl host is used. (env SAML_PROXY_COOKIE_DOMAIN)
   -cookie-max-age duration
-        Specifies the amount of time the authentication token will remain valid (env SAML_PROXY_COOKIE_MAX_AGE) (default 2h0m0s) 
+        Specifies the amount of time the authentication token will remain valid (env SAML_PROXY_COOKIE_MAX_AGE) (default 2h0m0s)
   -cookie-name string
         Name of the cookie that tracks session token (env SAML_PROXY_COOKIE_NAME) (default "token")
+  -debug
+        Enable debug logs (env SAML_PROXY_DEBUG)
+  -encrypt-jwt
+        If set, enables JWT session encryption (env SAML_PROXY_ENCRYPT_JWT)
   -entity-id string
         Entity ID of this service provider (env SAML_PROXY_ENTITY_ID)
   -idp-ca-path path
         Optional path to a CA certificate PEM file for the IdP (env SAML_PROXY_IDP_CA_PATH)
   -idp-metadata-url URL
         URL of the IdP's metadata XML, can be a local file by specifying the file:// scheme (env SAML_PROXY_IDP_METADATA_URL)
-  -initiate-session-path path
+  -initiate-session-path string
         If set, initiates a SAML authentication flow only when a user visits this path. This will allow anonymous users to access to the backend. (env SAML_PROXY_INITIATE_SESSION_PATH)
   -name-id-format string
         One of unspecified, transient, email, or persistent to use a standard format or give a full URN of the name ID format (env SAML_PROXY_NAME_ID_FORMAT) (default "transient")
@@ -49,15 +55,12 @@ Provides a SAML SP authentication proxy for backend web services
         URL of webhook that will get POST'ed when a new authentication is processed (env SAML_PROXY_NEW_AUTH_WEBHOOK_URL)
   -sign-requests
         If set, enables SAML request signing (env SAML_PROXY_SIGN_REQUESTS)
-  -encrypt-jwt
-        If set, JWTs will be encrypted as JWE (env SAML_PROXY_ENCRYPT_JWT)
   -sp-cert-path path
         The path to the X509 public certificate PEM file for this SP (env SAML_PROXY_SP_CERT_PATH) (default "saml-auth-proxy.cert")
   -sp-key-path path
         The path to the X509 private key PEM file for this SP (env SAML_PROXY_SP_KEY_PATH) (default "saml-auth-proxy.key")
   -static-relay-state string
-        A fixed RelayState value, such as a short URL. Will be trimmed to 80 characters to conform with SAML. The default generates random bytes that are Base64
- encoded. (env SAML_PROXY_STATIC_RELAY_STATE)
+        A fixed RelayState value, such as a short URL. Will be trimmed to 80 characters to conform with SAML. The default generates random bytes that are Base64 encoded. (env SAML_PROXY_STATIC_RELAY_STATE)
   -version
         show version and exit
 ```
