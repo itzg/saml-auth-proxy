@@ -31,4 +31,5 @@ type Config struct {
 	InitiateSessionPath     string            `usage:"If set, initiates a SAML authentication flow only when a user visits this path. This will allow anonymous users to access to the backend."`
 	SignRequests            bool              `usage:"If set, enables SAML request signing"`
 	EncryptJWT              bool              `usage:"If set, enables JWT session encryption"`
+	DenyNonInteractive      bool              `usage:"If set, will respond with 401 unauthorized for non-interactive requests"`
 }
