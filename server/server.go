@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -133,10 +134,21 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 		}
 	}
 
+	// Helper to short-circuit non-interactive background requests with 401 instead of redirecting
+	stopXHRRedirects := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get("X-Requested-With") == "XMLHttpRequest" || strings.Contains(r.Header.Get("Accept"), "application/json") {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	http.Handle("/saml/sign_in", http.HandlerFunc(middleware.HandleStartAuthFlow))
 	http.Handle("/saml/", middleware)
 	http.Handle("/_health", http.HandlerFunc(proxy.health))
-	http.Handle("/", middleware.RequireAccount(app))
+	http.Handle("/", stopXHRRedirects(middleware.RequireAccount(app)))
 
 	logger.
 		With(zap.String("baseUrl", cfg.BaseUrl)).
