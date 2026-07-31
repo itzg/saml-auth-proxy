@@ -148,11 +148,7 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 	http.Handle("/saml/sign_in", http.HandlerFunc(middleware.HandleStartAuthFlow))
 	http.Handle("/saml/", middleware)
 	http.Handle("/_health", http.HandlerFunc(proxy.health))
-	if cfg.DenyNonInteractive {
-		http.Handle("/", stopXHRRedirects(middleware.RequireAccount(app)))
-	} else {
-		http.Handle("/", middleware.RequireAccount(app))
-	}
+	http.Handle("/", stopXHRRedirects(middleware.RequireAccount(app)))
 
 	logger.
 		With(zap.String("baseUrl", cfg.BaseUrl)).

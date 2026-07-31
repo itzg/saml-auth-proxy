@@ -8,63 +8,61 @@ Provides a SAML SP authentication proxy for backend web services
 
 ```text
   -allow-idp-initiated
-    	If set, allows for IdP initiated authentication flow (env SAML_PROXY_ALLOW_IDP_INITIATED)
+        If set, allows for IdP initiated authentication flow (env SAML_PROXY_ALLOW_IDP_INITIATED)
   -attribute-header-mappings attribute=header
-    	Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header (env SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS)
+        Comma separated list of attribute=header pairs mapping SAML IdP response attributes to forwarded request header (env SAML_PROXY_ATTRIBUTE_HEADER_MAPPINGS)
   -attribute-header-wildcard string
-    	Maps all SAML attributes with this option as a prefix, slashes in attribute names will be replaced by dashes (env SAML_PROXY_ATTRIBUTE_HEADER_WILDCARD)
+        Maps all SAML attributes with this option as a prefix, slashes in attribute names will be replaced by dashes (env SAML_PROXY_ATTRIBUTE_HEADER_WILDCARD)
   -auth-verify
-    	Enables verify path endpoint for forward auth and trusts X-Forwarded headers (env SAML_PROXY_AUTH_VERIFY)
+        Enables verify path endpoint for forward auth and trusts X-Forwarded headers (env SAML_PROXY_AUTH_VERIFY)
   -auth-verify-path string
-    	Path under BaseUrl that will respond with a 204 when authenticated (env SAML_PROXY_AUTH_VERIFY_PATH) (default "/_verify")
+        Path under BaseUrl that will respond with a 204 when authenticated (env SAML_PROXY_AUTH_VERIFY_PATH) (default "/_verify")
   -auth-verify-require-login
-    	If set, trigger a login if the user is not authenticated during verify (env SAML_PROXY_AUTH_VERIFY_REQUIRE_LOGIN)
+        If set, trigger a login if the user is not authenticated during verify (env SAML_PROXY_AUTH_VERIFY_REQUIRE_LOGIN)
   -authorize-attribute attribute
-    	Enables authorization and specifies the attribute to check for authorized values (env SAML_PROXY_AUTHORIZE_ATTRIBUTE)
+        Enables authorization and specifies the attribute to check for authorized values (env SAML_PROXY_AUTHORIZE_ATTRIBUTE)
   -authorize-values values
-    	If enabled, comma separated list of values that must be present in the authorize attribute (env SAML_PROXY_AUTHORIZE_VALUES)
+        If enabled, comma separated list of values that must be present in the authorize attribute (env SAML_PROXY_AUTHORIZE_VALUES)
   -backend-url URL
-    	URL of the backend being proxied (env SAML_PROXY_BACKEND_URL)
+        URL of the backend being proxied (env SAML_PROXY_BACKEND_URL)
   -base-url URL
-    	External URL of this proxy (env SAML_PROXY_BASE_URL)
+        External URL of this proxy (env SAML_PROXY_BASE_URL)
   -bind host:port
-    	host:port to bind for serving HTTP (env SAML_PROXY_BIND) (default ":8080")
+        host:port to bind for serving HTTP (env SAML_PROXY_BIND) (default ":8080")
   -cookie-domain string
-    	Overrides the domain set on the session cookie. By default the BaseUrl host is used. (env SAML_PROXY_COOKIE_DOMAIN)
+        Overrides the domain set on the session cookie. By default the BaseUrl host is used. (env SAML_PROXY_COOKIE_DOMAIN)
   -cookie-max-age duration
-    	Specifies the amount of time the authentication token will remain valid (env SAML_PROXY_COOKIE_MAX_AGE) (default 2h0m0s)
+        Specifies the amount of time the authentication token will remain valid (env SAML_PROXY_COOKIE_MAX_AGE) (default 2h0m0s)
   -cookie-name string
-    	Name of the cookie that tracks session token (env SAML_PROXY_COOKIE_NAME) (default "token")
+        Name of the cookie that tracks session token (env SAML_PROXY_COOKIE_NAME) (default "token")
   -debug
-    	Enable debug logs (env SAML_PROXY_DEBUG)
-  -deny-non-interactive
-    	If set, will respond with 401 unauthorized for non-interactive requests (env SAML_PROXY_DENY_NON_INTERACTIVE)
+        Enable debug logs (env SAML_PROXY_DEBUG)
   -encrypt-jwt
-    	If set, enables JWT session encryption (env SAML_PROXY_ENCRYPT_JWT)
+        If set, enables JWT session encryption (env SAML_PROXY_ENCRYPT_JWT)
   -entity-id string
-    	Entity ID of this service provider (env SAML_PROXY_ENTITY_ID)
+        Entity ID of this service provider (env SAML_PROXY_ENTITY_ID)
   -idp-ca-path path
-    	Optional path to a CA certificate PEM file for the IdP (env SAML_PROXY_IDP_CA_PATH)
+        Optional path to a CA certificate PEM file for the IdP (env SAML_PROXY_IDP_CA_PATH)
   -idp-metadata-url URL
-    	URL of the IdP's metadata XML, can be a local file by specifying the file:// scheme (env SAML_PROXY_IDP_METADATA_URL)
+        URL of the IdP's metadata XML, can be a local file by specifying the file:// scheme (env SAML_PROXY_IDP_METADATA_URL)
   -initiate-session-path string
-    	If set, initiates a SAML authentication flow only when a user visits this path. This will allow anonymous users to access to the backend. (env SAML_PROXY_INITIATE_SESSION_PATH)
+        If set, initiates a SAML authentication flow only when a user visits this path. This will allow anonymous users to access to the backend. (env SAML_PROXY_INITIATE_SESSION_PATH)
   -name-id-format string
-    	One of unspecified, transient, email, or persistent to use a standard format or give a full URN of the name ID format (env SAML_PROXY_NAME_ID_FORMAT) (default "transient")
+        One of unspecified, transient, email, or persistent to use a standard format or give a full URN of the name ID format (env SAML_PROXY_NAME_ID_FORMAT) (default "transient")
   -name-id-mapping header
-    	Name of the request header to convey the SAML nameID/subject (env SAML_PROXY_NAME_ID_MAPPING)
+        Name of the request header to convey the SAML nameID/subject (env SAML_PROXY_NAME_ID_MAPPING)
   -new-auth-webhook-url URL
-    	URL of webhook that will get POST'ed when a new authentication is processed (env SAML_PROXY_NEW_AUTH_WEBHOOK_URL)
+        URL of webhook that will get POST'ed when a new authentication is processed (env SAML_PROXY_NEW_AUTH_WEBHOOK_URL)
   -sign-requests
-    	If set, enables SAML request signing (env SAML_PROXY_SIGN_REQUESTS)
+        If set, enables SAML request signing (env SAML_PROXY_SIGN_REQUESTS)
   -sp-cert-path path
-    	The path to the X509 public certificate PEM file for this SP (env SAML_PROXY_SP_CERT_PATH) (default "saml-auth-proxy.cert")
+        The path to the X509 public certificate PEM file for this SP (env SAML_PROXY_SP_CERT_PATH) (default "saml-auth-proxy.cert")
   -sp-key-path path
-    	The path to the X509 private key PEM file for this SP (env SAML_PROXY_SP_KEY_PATH) (default "saml-auth-proxy.key")
+        The path to the X509 private key PEM file for this SP (env SAML_PROXY_SP_KEY_PATH) (default "saml-auth-proxy.key")
   -static-relay-state string
-    	A fixed RelayState value, such as a short URL. Will be trimmed to 80 characters to conform with SAML. The default generates random bytes that are Base64 encoded. (env SAML_PROXY_STATIC_RELAY_STATE)
+        A fixed RelayState value, such as a short URL. Will be trimmed to 80 characters to conform with SAML. The default generates random bytes that are Base64 encoded. (env SAML_PROXY_STATIC_RELAY_STATE)
   -version
-    	show version and exit
+        show version and exit
 ```
 
 The snake-case values, such as `SAML_PROXY_BACKEND_URL`, are the equivalent environment variables that can be set instead of passing configuration via the command-line. 
