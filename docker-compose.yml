@@ -15,6 +15,16 @@ services:
     image: itzg/web-debug-server:1.2.3
     ports:
       - "8081:8080"
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./test/keycloak/realm-saml-auth-proxy.json:/opt/keycloak/data/import/realm-saml-auth-proxy.json:ro
 
 volumes:
   grafana: {}
