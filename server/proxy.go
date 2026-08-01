@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -72,6 +73,7 @@ func NewProxy(logger *zap.Logger, cfg *Config) (*Proxy, error) {
 }
 
 func (p *Proxy) health(respOutWriter http.ResponseWriter, _ *http.Request) {
+	p.logger.Debug("Responding to health check")
 	respOutWriter.Header().Set("Content-Type", "text/plain")
 	respOutWriter.WriteHeader(200)
 	_, err := respOutWriter.Write([]byte("OK"))
@@ -85,14 +87,17 @@ func (p *Proxy) health(respOutWriter http.ResponseWriter, _ *http.Request) {
 func (p *Proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) {
 	// Check if this is a WebSocket upgrade request
 	if websocket.IsWebSocketUpgrade(reqIn) {
+		p.logger.Debug("Upgrading to WebSocket")
 		p.handleWebSocket(respOutWriter, reqIn)
 		return
 	}
 
 	session := samlsp.SessionFromContext(reqIn.Context())
 
+	reqInPath := reqIn.URL.Path
 	var reqOut *http.Request
 	if IsAnonymousSession(session) {
+		p.logger.Debug("Proxying anonymous request", zap.String("path", reqInPath))
 		reqOut = p.setupRequest(respOutWriter, reqIn)
 		if reqOut == nil {
 			return
@@ -101,14 +106,17 @@ func (p *Proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 	} else {
 		sessionClaims, ok := session.(samlsp.JWTSessionClaims)
 		if !ok {
-			p.logger.Error("session is not expected type")
+			p.logger.Error("session is not expected type",
+				zap.String("path", reqInPath))
 			respOutWriter.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		authUsing, authorized := p.authorized(&sessionClaims)
 		if !authorized {
-			p.logger.Debug("Responding Unauthorized")
+			p.logger.Debug("Responding Unauthorized",
+				zap.String("path", reqInPath),
+			)
 			respOutWriter.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -117,6 +125,11 @@ func (p *Proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 		if reqOut == nil {
 			return
 		}
+		p.logger.Debug("Setup proxy request",
+			zap.String("from", reqInPath),
+			zap.String("authUsing", authUsing),
+			zap.String("to", reqOut.URL.Path),
+		)
 
 		p.checkForNewAuth(&sessionClaims)
 
@@ -234,7 +247,13 @@ func (p *Proxy) checkForNewAuth(sessionClaims *samlsp.JWTSessionClaims) {
 			encoder := json.NewEncoder(&postBody)
 			err := encoder.Encode(sessionClaims.GetAttributes())
 			if err == nil {
-				_, err := http.Post(p.config.NewAuthWebhookUrl, "application/json", &postBody)
+				p.logger.Debug("Posting new auth webhook",
+					zap.String("url", p.config.NewAuthWebhookUrl),
+				)
+				resp, err := http.Post(p.config.NewAuthWebhookUrl, "application/json", &postBody)
+				if resp != nil {
+					_ = resp.Body.Close()
+				}
 				if err != nil {
 					p.logger.
 						With(zap.Error(err)).
@@ -261,10 +280,8 @@ func (p *Proxy) authorized(sessionClaims *samlsp.JWTSessionClaims) (string, bool
 		}
 
 		for _, value := range values {
-			for _, expected := range p.config.AuthorizeValues {
-				if value == expected {
-					return fmt.Sprintf("%s=%s", p.config.AuthorizeAttribute, value), true
-				}
+			if slices.Contains(p.config.AuthorizeValues, value) {
+				return fmt.Sprintf("%s=%s", p.config.AuthorizeAttribute, value), true
 			}
 		}
 
