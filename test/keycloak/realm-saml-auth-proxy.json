@@ -25,17 +25,17 @@
   ],
   "clients": [
     {
-      "clientId": "http://localhost.itzg.me:8080/saml/metadata",
+      "clientId": "http://localhost:8080/saml/metadata",
       "name": "saml-auth-proxy",
       "protocol": "saml",
       "enabled": true,
       "publicClient": false,
       "frontchannelLogout": true,
-      "baseUrl": "http://localhost.itzg.me:8080",
-      "adminUrl": "http://localhost.itzg.me:8080/saml/acs",
+      "baseUrl": "http://localhost:8080",
+      "adminUrl": "http://host.docker.internal:8080/saml/acs",
       "redirectUris": [
-        "http://localhost.itzg.me:8080/saml/acs",
-        "http://localhost.itzg.me:8080/*"
+        "http://localhost:8080/saml/acs",
+        "http://localhost:8080/*"
       ],
       "attributes": {
         "saml.assertion.signature": "true",

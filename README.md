@@ -124,27 +124,23 @@ docker compose up -d
 > [!NOTE]
 > The Keycloak container will be preconfigured with an SSO realm and user.
 
-Create a domain name that resolves to 127.0.0.1 and use that as `BASE_FQDN` in the following:
-
-Generate the SP certificate and key material by running:
+Generate the SP certificate and key material:
 
 ```bash
-# IMPORTANT: set this
-BASE_FQDN=...
-openssl req -x509 -newkey rsa:2048 -keyout saml-auth-proxy.key -out saml-auth-proxy.cert -days 365 -nodes -subj "/CN=${BASE_FQDN}"
+openssl req -x509 -newkey rsa:2048 -keyout saml-auth-proxy.key -out saml-auth-proxy.cert -days 365 -nodes -subj "/CN=localhost"
 ```
 
-Start saml-auth-proxy using Keycloak metadata:
+Start saml-auth-proxy using Keycloak as the IdP:
 
 ```bash
 ./saml-auth-proxy \
-  --base-url http://${BASE_FQDN}:8080 \
+  --base-url http://localhost:8080 \
   --backend-url http://localhost:3000 \
   --idp-metadata-url=http://localhost:8082/realms/saml-auth-proxy/protocol/saml/descriptor \
   --attribute-header-mappings UserID=x-webauth-user
 ```
 
-Open your browser and navigate to `http://${BASE_FQDN}:8080`. Login with:
+Open your browser and navigate to `http://localhost:8080`. Login with:
 
 - username: `user1`
 - password: `password`
