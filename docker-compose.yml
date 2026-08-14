@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
   grafana:
     image: grafana/grafana
@@ -12,9 +10,22 @@ services:
     volumes:
       - grafana:/var/lib/grafana
   web-debug-server:
-    image: itzg/web-debug-server:1.2.3
+    image: itzg/web-debug-server
+    pull_policy: always
     ports:
       - "8081:8080"
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8082:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./test/keycloak/realm-saml-auth-proxy.json:/opt/keycloak/data/import/realm-saml-auth-proxy.json:ro
 
 volumes:
   grafana: {}

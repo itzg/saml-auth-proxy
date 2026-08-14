@@ -42,9 +42,11 @@ func main() {
 	var logger *zap.Logger
 	if serverConfig.Debug {
 		logger = zapconfigs.NewDebugLogger()
+		logger.Debug("Debug logging enabled")
 	} else {
 		logger = zapconfigs.NewDefaultLogger()
 	}
+	zap.ReplaceGlobals(logger)
 	defer logger.Sync()
 
 	checkRequired(serverConfig.BaseUrl, "base-url")

@@ -1,0 +1,102 @@
+{
+  "realm": "saml-auth-proxy",
+  "enabled": true,
+  "displayName": "saml-auth-proxy test realm",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "users": [
+    {
+      "username": "user1",
+      "enabled": true,
+      "firstName": "Test",
+      "lastName": "User",
+      "email": "user1@example.test",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "http://localhost:8080/saml/metadata",
+      "name": "saml-auth-proxy",
+      "protocol": "saml",
+      "enabled": true,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "baseUrl": "http://localhost:8080",
+      "adminUrl": "http://host.docker.internal:8080/saml/acs",
+      "redirectUris": [
+        "http://localhost:8080/saml/acs",
+        "http://localhost:8080/*"
+      ],
+      "attributes": {
+        "saml.assertion.signature": "true",
+        "saml.server.signature": "true",
+        "saml.client.signature": "false",
+        "saml.force.post.binding": "true",
+        "saml.encrypt": "false",
+        "saml_name_id_format": "transient",
+        "saml.signature.algorithm": "RSA_SHA256",
+        "saml.authnstatement": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "attribute.name": "EmailAddress",
+            "friendly.name": "EmailAddress",
+            "user.attribute": "email"
+          }
+        },
+        {
+          "name": "username",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "attribute.name": "UserID",
+            "friendly.name": "UserID",
+            "user.attribute": "username"
+          }
+        },
+        {
+          "name": "firstName",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "attribute.name": "FirstName",
+            "friendly.name": "FirstName",
+            "user.attribute": "firstName"
+          }
+        },
+        {
+          "name": "lastName",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "attribute.name": "LastName",
+            "friendly.name": "LastName",
+            "user.attribute": "lastName"
+          }
+        }
+      ]
+    }
+  ]
+}

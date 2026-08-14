@@ -6,9 +6,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
+	"time"
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
+	"go.uber.org/zap"
 )
 
 // Extends samlsp.CookieRequestTracker to add CookieDomain configuration.
@@ -28,12 +31,35 @@ func minOfInts(x, y int) int {
 	}
 }
 
-// Source: https://github.com/crewjam/saml/blob/5e0ffd290abf0be7dfd4f8279e03a963071544eb/samlsp/request_tracker_cookie.go#L28-58
+// TrackRequest is a patched version
+// Source: https://github.com/crewjam/saml/blob/ff03323de99bf95b338de6d92fda8a822d2418de/samlsp/request_tracker_cookie.go#L28-L58
 // Changes:
 // - Adds host in request URI
 // - Adds CookieDomain config in http.SetCookie
 // - Handles X-Forwarded headers
 func (t CookieRequestTracker) TrackRequest(w http.ResponseWriter, r *http.Request, samlRequestID string) (string, error) {
+	// Expire any existing tracked request cookies on the incoming request
+	count := 0
+	for _, cookie := range r.Cookies() {
+		if strings.HasPrefix(cookie.Name, t.NamePrefix) {
+			http.SetCookie(w, &http.Cookie{
+				Name:     cookie.Name,
+				Value:    "",
+				MaxAge:   -1,
+				Expires:  time.Unix(0, 0),
+				Domain:   t.CookieDomain,
+				HttpOnly: true,
+				SameSite: t.SameSite,
+				Secure:   t.ServiceProvider.AcsURL.Scheme == "https",
+				Path:     t.ServiceProvider.AcsURL.Path,
+			})
+			count++
+		}
+	}
+	if count > 0 {
+		zap.L().Debug("Expired extra request cookies", zap.Int("count", count))
+	}
+
 	var redirectURI *url.URL
 	if t.TrustForwardedHeaders && r.Header.Get(HeaderForwardedProto) != "" && r.Header.Get(HeaderForwardedHost) != "" && r.Header.Get(HeaderForwardedURI) != "" {
 		// When X-Forwarded headers exist, use it
@@ -63,8 +89,9 @@ func (t CookieRequestTracker) TrackRequest(w http.ResponseWriter, r *http.Reques
 		return "", err
 	}
 
+	name := t.NamePrefix + trackedRequest.Index
 	http.SetCookie(w, &http.Cookie{
-		Name:     t.NamePrefix + trackedRequest.Index,
+		Name:     name,
 		Value:    signedTrackedRequest,
 		MaxAge:   int(t.MaxAge.Seconds()),
 		Domain:   t.CookieDomain,
@@ -73,6 +100,11 @@ func (t CookieRequestTracker) TrackRequest(w http.ResponseWriter, r *http.Reques
 		Secure:   t.ServiceProvider.AcsURL.Scheme == "https",
 		Path:     t.ServiceProvider.AcsURL.Path,
 	})
+	zap.L().Debug("Set request tracking cookie", zap.String("name", name),
+		zap.String("name", name),
+		zap.String("domain", t.CookieDomain),
+		zap.String("path", t.ServiceProvider.AcsURL.Path),
+		zap.Duration("maxAge", t.MaxAge))
 
 	return trackedRequest.Index, nil
 }

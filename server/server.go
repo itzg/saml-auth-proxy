@@ -6,12 +6,14 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -133,10 +135,40 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 		}
 	}
 
+	preHandleNonInteractive := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if isNonInteractiveRequest(r) {
+				session, err := middleware.Session.GetSession(r)
+				if errors.Is(err, samlsp.ErrNoSession) {
+					logger.Debug("Fail-fast non-interactive request without auth session", zap.String("path", r.URL.Path))
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+
+				if err != nil {
+					logger.Warn("Unexpected error while evaluating non-interactive request session",
+						zap.String("path", r.URL.Path),
+						zap.Error(err))
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				if session == nil {
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	http.Handle("/saml/sign_in", http.HandlerFunc(middleware.HandleStartAuthFlow))
 	http.Handle("/saml/", middleware)
 	http.Handle("/_health", http.HandlerFunc(proxy.health))
-	http.Handle("/", middleware.RequireAccount(app))
+	http.Handle("/",
+		preHandleNonInteractive(
+			middleware.RequireAccount(
+				app,
+			)))
 
 	logger.
 		With(zap.String("baseUrl", cfg.BaseUrl)).
@@ -144,6 +176,38 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 		With(zap.String("binding", cfg.Bind)).
 		Info("Serving requests")
 	return http.Serve(listener, nil)
+}
+
+func isNonInteractiveRequest(r *http.Request) bool {
+	// Legacy AJAX signal
+	if strings.EqualFold(r.Header.Get("X-Requested-With"), "XMLHttpRequest") {
+		return true
+	}
+
+	// Modern browser fetch metadata
+	mode := strings.ToLower(strings.TrimSpace(r.Header.Get("Sec-Fetch-Mode")))
+	dest := strings.ToLower(strings.TrimSpace(r.Header.Get("Sec-Fetch-Dest")))
+
+	if mode != "" && mode != "navigate" {
+		return true
+	}
+	if dest == "empty" {
+		return true
+	}
+
+	// Fallback for non-browser clients
+	accept := strings.ToLower(r.Header.Get("Accept"))
+	if accept == "" {
+		return false
+	}
+	if strings.Contains(accept, "text/html") || strings.Contains(accept, "application/xhtml+xml") {
+		return false
+	}
+	if strings.Contains(accept, "application/json") || strings.Contains(accept, "text/plain") {
+		return true
+	}
+
+	return false
 }
 
 func fetchMetadata(ctx context.Context, client *http.Client, idpMetadataUrl *url.URL) (*saml.EntityDescriptor, error) {

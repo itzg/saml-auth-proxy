@@ -110,69 +110,40 @@ With Go 1.11 or newer:
 go build
 ```
 
-## Trying it out
+## Trying it out with Keycloak (local IdP)
 
-The following procedure will enable you to try out the proxy running locally and using
-Grafana as a backend to proxy with authentication. It will use [SSOCircle](https://www.ssocircle.com)
-as a SAML IdP.
+The following procedure runs a local Keycloak instance with a pre-configured SAML realm/client
+for this proxy.
 
-Start the supplied Grafana and Web Debug Server using Docker Compose:
+Start the supplied Grafana, Web Debug Server, and Keycloak
 
 ```bash
 docker compose up -d
 ```
 
-Create a domain name that resolves to 127.0.0.1 and use that as the `BASE_FQDN` in the following
-operations;
+> [!NOTE]
+> The Keycloak container will be preconfigured with an SSO realm and user.
 
-Generate the SP certificate and key material by running:
+Generate the SP certificate and key material:
 
 ```bash
-# IMPORTANT: set this
-BASE_FQDN=...
-openssl req -x509 -newkey rsa:2048 -keyout saml-auth-proxy.key -out saml-auth-proxy.cert -days 365 -nodes -subj "/CN=${BASE_FQDN}"
+openssl req -x509 -newkey rsa:2048 -keyout saml-auth-proxy.key -out saml-auth-proxy.cert -days 365 -nodes -subj "/CN=localhost"
 ```
 
-Start saml-auth-proxy using:
+Start saml-auth-proxy using Keycloak as the IdP:
 
 ```bash
 ./saml-auth-proxy \
-  --base-url http://${BASE_FQDN}:8080 \
+  --base-url http://localhost:8080 \
   --backend-url http://localhost:3000 \
-  --idp-metadata-url=https://idp.ssocircle.com/meta-idp.xml \
+  --idp-metadata-url=http://localhost:8082/realms/saml-auth-proxy/protocol/saml/descriptor \
   --attribute-header-mappings UserID=x-webauth-user
 ```
 
-Generate your SP's SAML metadata by accessing the built-in metadata endpoint:
+Open your browser and navigate to `http://localhost:8080`. Login with:
 
-```bash
-curl http://localhost:8080/saml/metadata > saml-sp-metadata.xml
-```
-
-or with PowerShell
-```ps
-Invoke-RestMethod -Uri http://localhost:8080/saml/metadata -OutFile .\saml-sp-metadata.xml
-```
-
-You can upload the  file `saml-sp-metadata.xml` file at 
-[SSOCircle's Manage SP Meta Data](https://idp.ssocircle.com/sso/hos/ManageSPMetadata.jsp).
-
-**Note** you will also be selecting the attributes that will be included in the assertion in the SAML authentication response, such as: 
-- `FirstName`
-- `LastName`
-- `EmailAddress`
-- `UserID`
-
-To try out authorization you would add the following arguments referencing something like `UserID` and one or more expected SAMLTest user's values:
-
-```
-  --authorize-attribute UserID \
-  --authorize-values user1,user2
-```
-
-Now you can open your browser and navigate to `http://${BASE_FQDN}:8080`. You will be redirected via SAMLTest's login page and then be returned with access to Grafana.
-
-Force a logout from the IdP by going to <https://idp.ssocircle.com/sso/UI/Logout>
+- username: `user1`
+- password: `password`
 
 ## Troubleshooting
 
