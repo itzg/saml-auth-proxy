@@ -1,6 +1,7 @@
 module github.com/itzg/saml-auth-proxy
 
-go 1.26.5
+go 1.26
+toolchain go1.26.6
 
 require (
 	github.com/crewjam/saml v0.5.1
