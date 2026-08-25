@@ -2,6 +2,7 @@ package server
 
 import (
 	"crypto"
+	"crypto/ecdsa"
 	"crypto/rsa"
 	"fmt"
 
@@ -14,22 +15,28 @@ import (
 type JWESessionCodec struct {
 	jwtSessionCodec *samlsp.JWTSessionCodec
 	encrypter       jose.Encrypter
-	privateKey      *rsa.PrivateKey
+	privateKey      crypto.PrivateKey
+	keyAlgorithm    jose.KeyAlgorithm
 }
 
-func NewJWESessionCodec(sessionCodec samlsp.SessionCodec, publicKey crypto.PublicKey, privateKey *rsa.PrivateKey) (samlsp.SessionCodec, error) {
+func NewJWESessionCodec(sessionCodec samlsp.SessionCodec, publicKey crypto.PublicKey, privateKey crypto.PrivateKey) (samlsp.SessionCodec, error) {
 	codec, ok := sessionCodec.(samlsp.JWTSessionCodec)
 	if !ok {
 		return nil, fmt.Errorf("session codec isn't JWT session codec")
 	}
 
+	keyAlgorithm, err := jweKeyAlgorithmForPublicKey(publicKey)
+	if err != nil {
+		return nil, err
+	}
+
 	// create a JWE encrypter (possible to parameterize jose.ContentEncryption and jose.KeyAlgorithm)
-	encrypter, err := jose.NewEncrypter(jose.A128GCM, jose.Recipient{Algorithm: jose.RSA_OAEP, Key: publicKey}, nil)
+	encrypter, err := jose.NewEncrypter(jose.A128GCM, jose.Recipient{Algorithm: keyAlgorithm, Key: publicKey}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create jwe encrypter: %w", err)
 	}
 
-	return &JWESessionCodec{jwtSessionCodec: &codec, encrypter: encrypter, privateKey: privateKey}, nil
+	return &JWESessionCodec{jwtSessionCodec: &codec, encrypter: encrypter, privateKey: privateKey, keyAlgorithm: keyAlgorithm}, nil
 }
 
 func (c *JWESessionCodec) New(assertion *saml.Assertion) (samlsp.Session, error) {
@@ -57,7 +64,7 @@ func (c *JWESessionCodec) Encode(s samlsp.Session) (string, error) {
 // validate the JWS
 func (c *JWESessionCodec) Decode(encrypted string) (samlsp.Session, error) {
 	// parse the JWE token (possible to parameterize jose.ContentEncryption and jose.KeyAlgorithm)
-	jwe, err := jose.ParseEncrypted(encrypted, []jose.KeyAlgorithm{jose.RSA_OAEP}, []jose.ContentEncryption{jose.A128GCM})
+	jwe, err := jose.ParseEncrypted(encrypted, []jose.KeyAlgorithm{c.keyAlgorithm}, []jose.ContentEncryption{jose.A128GCM})
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse jwe token: %w", err)
 	}
@@ -70,4 +77,15 @@ func (c *JWESessionCodec) Decode(encrypted string) (samlsp.Session, error) {
 
 	// decode the inner JWS using the wrapped codec
 	return c.jwtSessionCodec.Decode(string(decrypted))
+}
+
+func jweKeyAlgorithmForPublicKey(publicKey crypto.PublicKey) (jose.KeyAlgorithm, error) {
+	switch publicKey.(type) {
+	case *rsa.PublicKey:
+		return jose.RSA_OAEP, nil
+	case *ecdsa.PublicKey:
+		return jose.ECDH_ES_A128KW, nil
+	default:
+		return "", fmt.Errorf("unsupported public key type for JWE: %T", publicKey)
+	}
 }

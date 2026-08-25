@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"crypto/rsa"
+	"crypto"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/xml"
@@ -34,7 +34,10 @@ func Start(ctx context.Context, listener net.Listener, logger *zap.Logger, cfg *
 	if err != nil {
 		return fmt.Errorf("failed to parse SP certificate: %w", err)
 	}
-	privateKey := keyPair.PrivateKey.(*rsa.PrivateKey)
+	privateKey, ok := keyPair.PrivateKey.(crypto.Signer)
+	if !ok {
+		return fmt.Errorf("unsupported SP private key type %T: key must implement crypto.Signer", keyPair.PrivateKey)
+	}
 
 	idpMetadataUrl, err := url.Parse(cfg.IdpMetadataUrl)
 	if err != nil {
@@ -223,7 +226,8 @@ func fetchMetadata(ctx context.Context, client *http.Client, idpMetadataUrl *url
 		}
 		return idpMetadata, nil
 	} else {
-		reqCtx, _ := context.WithTimeout(ctx, fetchMetadataTimeout)
+		reqCtx, cancel := context.WithTimeout(ctx, fetchMetadataTimeout)
+		defer cancel()
 		return samlsp.FetchMetadata(reqCtx, client, *idpMetadataUrl)
 	}
 }
