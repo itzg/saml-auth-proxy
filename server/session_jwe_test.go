@@ -1,6 +1,8 @@
 package server
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"net/url"
@@ -107,5 +109,64 @@ func TestJWESessionCodec(t *testing.T) {
 	}
 	if !slices.Contains(groups, "admin") || !slices.Contains(groups, "users") {
 		t.Errorf("Expected groups 'admin' and 'users', got %v", groups)
+	}
+}
+
+func TestJWESessionCodec_ECDSA(t *testing.T) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("failed to generate ECDSA key pair: %v", err)
+	}
+
+	baseURL, _ := url.Parse("http://localhost") // baseURL is required
+	jwtCodec := samlsp.DefaultSessionCodec(samlsp.Options{Key: key, URL: *baseURL})
+
+	jweCodec, err := NewJWESessionCodec(jwtCodec, key.Public(), key)
+	if err != nil {
+		t.Fatalf("failed to create JWESessionCodec: %v", err)
+	}
+
+	assertion := &saml.Assertion{
+		Subject: &saml.Subject{
+			NameID: &saml.NameID{
+				Value: "ecdsa-user",
+			},
+		},
+		AuthnStatements: []saml.AuthnStatement{
+			{
+				SessionIndex: "ecdsa-session-index",
+				AuthnInstant: time.Now(),
+			},
+		},
+	}
+
+	session, err := jweCodec.New(assertion)
+	if err != nil {
+		t.Fatalf("Failed to create session: %v", err)
+	}
+
+	encoded, err := jweCodec.Encode(session)
+	if err != nil {
+		t.Fatalf("Failed to encode session: %v", err)
+	}
+	if encoded == "" {
+		t.Error("Encoded session should not be empty")
+	}
+
+	decodedSession, err := jweCodec.Decode(encoded)
+	if err != nil {
+		t.Fatalf("Failed to decode session: %v", err)
+	}
+	if decodedSession == nil {
+		t.Error("Decoded session should not be nil")
+	}
+
+	claim, ok := decodedSession.(samlsp.JWTSessionClaims)
+	if !ok {
+		t.Fatal("Decoded session is not a JWTSessionClaims")
+	}
+
+	if claim.Subject != "ecdsa-user" {
+		t.Errorf("Expected subject 'ecdsa-user', got '%s'", claim.Subject)
 	}
 }
