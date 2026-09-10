@@ -4,7 +4,7 @@ go 1.26.6
 
 require (
 	github.com/crewjam/saml v0.5.1
-	github.com/go-jose/go-jose/v4 v4.1.4
+	github.com/go-jose/go-jose/v4 v4.1.5
 	github.com/gorilla/websocket v1.5.3
 	github.com/itzg/go-flagsfiller v1.19.0
 	github.com/itzg/zapconfigs v0.1.0
