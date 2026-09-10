@@ -10,7 +10,7 @@ require (
 	github.com/itzg/zapconfigs v0.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	go.uber.org/zap v1.28.0
-	golang.org/x/sync v0.22.0
+	golang.org/x/sync v0.23.0
 )
 
 require (
