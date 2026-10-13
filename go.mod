@@ -1,6 +1,6 @@
 module github.com/itzg/saml-auth-proxy
 
-go 1.26.6
+go 1.27.2
 
 require (
 	github.com/crewjam/saml v0.5.1
@@ -10,16 +10,16 @@ require (
 	github.com/itzg/zapconfigs v0.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	go.uber.org/zap v1.28.0
-	golang.org/x/sync v0.23.0
+	golang.org/x/sync v0.24.0
 )
 
 require (
-	github.com/beevik/etree v1.7.0 // indirect
+	github.com/beevik/etree v1.8.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
-	github.com/russellhaering/goxmldsig v1.6.0 // indirect
+	github.com/russellhaering/goxmldsig v1.6.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.54.0 // indirect
+	golang.org/x/crypto v0.58.0 // indirect
 )
