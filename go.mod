@@ -3,7 +3,7 @@ module github.com/itzg/saml-auth-proxy
 go 1.27.3
 
 require (
-	github.com/crewjam/saml v0.5.1
+	github.com/crewjam/saml v0.5.2
 	github.com/go-jose/go-jose/v4 v4.1.8
 	github.com/gorilla/websocket v1.5.3
 	github.com/itzg/go-flagsfiller v1.19.0
@@ -16,6 +16,7 @@ require (
 require (
 	github.com/beevik/etree v1.8.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect

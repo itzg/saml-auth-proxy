@@ -164,6 +164,7 @@ func (p *Proxy) handler(respOutWriter http.ResponseWriter, reqIn *http.Request) 
 		_, _ = respOutWriter.Write([]byte(err.Error()))
 		return
 	}
+	//goland:noinspection GoUnhandledErrorResult
 	defer respIn.Body.Close()
 	copyHeaders(respOutWriter.Header(), respIn.Header)
 	respOutWriter.WriteHeader(respIn.StatusCode)
@@ -236,8 +237,9 @@ func (p *Proxy) addHeaders(sessionClaims samlsp.JWTSessionClaims, headers http.H
 }
 
 func (p *Proxy) checkForNewAuth(sessionClaims *samlsp.JWTSessionClaims) {
-	if p.config.NewAuthWebhookUrl != "" && sessionClaims.IssuedAt >= time.Now().Unix()-1 {
-		err := p.newTokenCache.Add(sessionClaims.Id, sessionClaims, cache.DefaultExpiration)
+	// the offset by one second allows for a small tolerance such as slight clock skew
+	if p.config.NewAuthWebhookUrl != "" && sessionClaims.IssuedAt.Time.After(time.Now().Add(-1*time.Second)) {
+		err := p.newTokenCache.Add(sessionClaims.ID, sessionClaims, cache.DefaultExpiration)
 		if err == nil {
 			p.logger.
 				With(zap.Any("sessionClaims", sessionClaims)).
