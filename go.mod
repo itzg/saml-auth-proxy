@@ -4,7 +4,7 @@ go 1.27.4
 
 require (
 	github.com/crewjam/saml v0.6.3
-	github.com/go-jose/go-jose/v4 v4.1.8
+	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/gorilla/websocket v1.5.3
 	github.com/itzg/go-flagsfiller v1.19.0
 	github.com/itzg/zapconfigs v0.1.0
